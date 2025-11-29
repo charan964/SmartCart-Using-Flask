@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Admin Login</h2>
+
+    <form method="POST">
+        <input type="email" name="email" placeholder="Enter Email" required>
+        <input type="password" name="password" placeholder="Enter Password" required>
+
+        <button class="btn">Login</button>
+
+        <a class="link" href="/forgot-password">Forgot Password?</a>
+    </form>
+</div>
+
+{% endblock %}

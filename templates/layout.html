@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else "SmartCart" }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+{% if not session.get('admin_id') %}
+<nav class="navbar">
+    <div class="logo">SmartCart</div>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/contact">Contact</a></li>
+        <li><a href="/admin-login">Login</a></li>
+        <li><a href="/admin-signup">Register</a></li>
+    </ul>
+</nav>
+{% else %}
+<nav class="navbar">
+    <div class="logo">SmartCart Admin</div>
+    <ul>
+        <li><a href="/admin-dashboard">Dashboard</a></li>
+        <li><a href="/admin/add-item">Add Items</a></li>
+        <li><a href="/admin/item-list">View Items</a></li>
+        <li><a href="/admin-logout">Logout</a></li>
+    </ul>
+</nav>
+{% endif %}
+
+
+<!-- FLASH -->
+<div class="flash-box">
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+    {% endfor %}
+{% endwith %}
+</div>
+
+
+<!-- MAIN CONTENT -->
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+
+<!-- FIXED-BOTTOM FOOTER -->
+<footer>
+    <p>© 2025 SmartCart | All Rights Reserved</p>
+</footer>
+
+</body>
+</html>

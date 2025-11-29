@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2 style="text-align:center; margin-top:25px;">All Products</h2>
+
+<div class="product-grid">
+
+    {% for p in products %}
+    <div class="product-card">
+
+        <!-- Product Image -->
+        <img src="/static/uploads/product_images/{{ p.image }}" alt="{{ p.name }}">
+
+        <!-- Name + Price -->
+        <h3 style="margin-top:10px;">{{ p.name }}</h3>
+        <p style="font-size:18px;"><strong>₹{{ p.price }}</strong></p>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+            <a href="/admin/view-item/{{ p.product_id }}" class="btn" style="width:48%;">View</a>
+            <a href="/admin/update-item/{{ p.product_id }}" class="btn" style="width:48%; background:#ff9800;">Update</a>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

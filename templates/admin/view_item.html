@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="product-view-container">
+
+    <!-- LEFT: Product Image -->
+    <div class="product-view-image">
+        <img src="/static/uploads/product_images/{{ product.image }}" alt="{{ product.name }}">
+    </div>
+
+    <!-- RIGHT: Product Details -->
+    <div class="product-view-details">
+        <h1>{{ product.name }}</h1>
+
+        <p class="desc">{{ product.description }}</p>
+
+        <p><strong>Category:</strong> {{ product.category }}</p>
+
+        <p class="price">₹{{ product.price }}</p>
+
+        <a href="/admin/item-list" class="btn back-btn">Back</a>
+        
+    </div>
+
+</div>
+
+{% endblock %}

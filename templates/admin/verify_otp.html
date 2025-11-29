@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Verify OTP</h2>
+
+    <form method="POST">
+        <input type="text" name="otp" placeholder="Enter OTP" required>
+        <input type="password" name="password" placeholder="Create Password" required>
+
+        <button class="btn">Verify & Register</button>
+    </form>
+</div>
+
+{% endblock %}

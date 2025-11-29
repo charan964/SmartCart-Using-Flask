@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="product-card-form">
+
+    <h2>Add New Product</h2>
+
+    <!-- Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="form-msg {{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="/admin/add-item" enctype="multipart/form-data">
+
+        <label>Product Name</label>
+        <input type="text" name="name" placeholder="Enter product name" required>
+
+        <label>Description</label>
+        <textarea name="description" placeholder="Product description" required></textarea>
+
+        <label>Category</label>
+        <input type="text" name="category" placeholder="Category" required>
+
+        <label>Price</label>
+        <input type="number" step="0.01" name="price" placeholder="₹ Price" required>
+
+        <label>Product Image</label>
+        <input type="file" name="image" class="file-input" accept="image/*" required>
+
+        <button class="btn submit-btn">Add Product</button>
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1 class="dash-title" style="text-align:center;">Welcome, {{ admin_name }}</h1>
+
+
+<div class="dash-cards">
+    
+    <a href="/admin/add-item" class="dash-card">➕ Add Product</a>
+    <a href="/admin/item-list" class="dash-card">📦 View Products</a>
+    <a href="/admin-logout" class="dash-card logout">🚪 Logout</a>
+</div>
+
+{% endblock %}
