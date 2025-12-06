@@ -1,10 +1,66 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="page-box">
-    <h1>Contact Us</h1>
-    <p>Email: support@smartcart.com</p>
-    <p>Phone: +91 9876543210</p>
+<h2 class="page-title">Contact Us</h2>
+
+<div class="contact-container">
+
+    <!-- Contact Info Card -->
+    <div class="contact-card">
+        <h3>Reach Us</h3>
+        <p>Email: support@smartcart.com</p>
+        <p>Phone: +91 98765 43210</p>
+        <p>Location: Hyderabad, India</p>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="contact-card form-card">
+        <h3>Send a Message</h3>
+
+        <form>
+            <input type="text" placeholder="Your Name" class="input-field">
+            <input type="email" placeholder="Email Address" class="input-field">
+            <textarea placeholder="Your Message" class="input-field"></textarea>
+
+            <button class="btn contact-btn">Send Message</button>
+        </form>
+    </div>
+
 </div>
+
+<style>
+.contact-container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.contact-card {
+    width: 320px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+.form-card {
+    width: 380px;
+}
+.input-field {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+.contact-btn {
+    width: 100%;
+    background: #006eff;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+}
+</style>
 
 {% endblock %}

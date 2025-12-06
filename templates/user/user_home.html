@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2 class="page-title">Welcome, {{ user_name }} 👋</h2>
+
+<div class="dashboard-grid">
+
+    <a href="/user/products" class="text-decoration-none">
+        <div class="dashboard-card blue">
+            <i class="fa fa-store"></i>
+            <div>
+                <h5>Browse Products</h5>
+                <p class="mb-0">View all available items</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="/user-logout" class="text-decoration-none">
+        <div class="dashboard-card orange">
+            <i class="fa fa-right-from-bracket"></i>
+            <div>
+                <h5>Logout</h5>
+                <p class="mb-0">Sign out from your account</p>
+            </div>
+        </div>
+    </a>
+
+</div>
+
+{% endblock %}

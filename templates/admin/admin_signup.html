@@ -1,16 +1,29 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="card">
-    <h2>Admin Registration</h2>
+<div class="card auth-card">
+    <div class="card-header text-center">
+        <h4><i class="fa-solid fa-user-plus"></i> Admin Registration</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/admin-signup">
+            <div class="mb-3">
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
 
-    <form method="POST">
-        <input type="text" name="name" placeholder="Full Name" required>
-        <input type="email" name="email" placeholder="Email" required>
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
 
-        <button class="btn">Send OTP</button>
-        <a class="link" href="/admin-login">Already have an account? Login</a>
-    </form>
+            <button class="btn btn-success w-100">Send OTP</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="/admin-login">Already registered? Login</a>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

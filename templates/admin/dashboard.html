@@ -1,14 +1,40 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h1 class="dash-title" style="text-align:center;">Welcome, {{ admin_name }}</h1>
+<h2 class="page-title">Admin Dashboard</h2>
 
+<div class="dashboard-grid">
 
-<div class="dash-cards">
-    
-    <a href="/admin/add-item" class="dash-card">➕ Add Product</a>
-    <a href="/admin/item-list" class="dash-card">📦 View Products</a>
-    <a href="/admin-logout" class="dash-card logout">🚪 Logout</a>
+    <a href="/admin/add-item" class="text-decoration-none">
+        <div class="dashboard-card blue">
+            <i class="fa fa-plus-circle"></i>
+            <div>
+                <h5>Add Product</h5>
+                <p class="mb-0">Create new product entries</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="/admin/item-list" class="text-decoration-none">
+        <div class="dashboard-card orange">
+            <i class="fa fa-boxes-stacked"></i>
+            <div>
+                <h5>Manage Products</h5>
+                <p class="mb-0">View / Update / Delete</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="/admin/profile" class="text-decoration-none">
+        <div class="dashboard-card green">
+            <i class="fa fa-user-gear"></i>
+            <div>
+                <h5>Admin Profile</h5>
+                <p class="mb-0">Update account details</p>
+            </div>
+        </div>
+    </a>
+
 </div>
 
 {% endblock %}

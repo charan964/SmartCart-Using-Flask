@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2 class="page-title">Admin Profile</h2>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4 shadow-sm">
+
+            <div class="text-center mb-3">
+                {% if admin.profile_image %}
+                    <img src="/static/uploads/admin_profiles/{{ admin.profile_image }}"
+                         width="110" height="110"
+                         style="object-fit:cover; border-radius:50%;">
+                {% else %}
+                    <i class="fa-solid fa-circle-user fa-4x text-secondary"></i>
+                {% endif %}
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label>Name</label>
+                    <input type="text" name="name" value="{{ admin.name }}" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ admin.email }}" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>New Password (optional)</label>
+                    <input type="password" name="password" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>Profile Image (optional)</label>
+                    <input type="file" name="profile_image" class="form-control" accept="image/*">
+                </div>
+
+                <button class="btn btn-success w-100">Update Profile</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="card auth-card">
+    <div class="card-header text-center">
+        <h4><i class="fa-solid fa-shield-halved"></i> Verify OTP</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/user-verify-otp">
+
+            <div class="mb-3">
+                <label>Enter OTP</label>
+                <input type="text" name="otp" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Create Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <button class="btn btn-primary w-100">Verify & Register</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

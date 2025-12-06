@@ -1,17 +1,30 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="card">
-    <h2>Admin Login</h2>
+<div class="card auth-card">
+    <div class="card-header text-center">
+        <h4><i class="fa-solid fa-user-tie"></i> Admin Login</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/admin-login">
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
 
-    <form method="POST">
-        <input type="email" name="email" placeholder="Enter Email" required>
-        <input type="password" name="password" placeholder="Enter Password" required>
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
 
-        <button class="btn">Login</button>
+            <button class="btn btn-primary w-100">Login</button>
+        </form>
 
-        <a class="link" href="/forgot-password">Forgot Password?</a>
-    </form>
+        <div class="text-center mt-3">
+            <a href="/forgot-password">Forgot Password?</a><br>
+            <a href="/admin-signup">New Admin? Register</a>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

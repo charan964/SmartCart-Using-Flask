@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h3 class="mb-4 fw-bold">All Products</h3>
+
+<!-- Search & Filter -->
+<form method="GET" class="row mb-4">
+    <div class="col-md-4">
+        <input type="text" class="form-control" name="search" placeholder="Search product..."
+               value="{{ request.args.get('search','') }}">
+    </div>
+
+    <div class="col-md-4">
+        <select class="form-control" name="category">
+            <option value="">All Categories</option>
+
+            {% for c in categories %}
+                <option value="{{ c.category }}"
+                    {% if request.args.get('category') == c.category %} selected {% endif %}>
+                    {{ c.category }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100"><i class="fa fa-search"></i> Search</button>
+    </div>
+</form>
+
+<!-- Product Grid -->
+<div class="row">
+
+    {% for p in products %}
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm product-card">
+
+            <img src="/static/uploads/product_images/{{ p.image }}"
+                 class="card-img-top" style="height:200px; object-fit:cover;">
+
+            <div class="card-body text-center">
+                <h5 class="fw-semibold">{{ p.name }}</h5>
+                <p class="text-success fw-bold">₹{{ p.price }}</p>
+
+                <!-- View Product -->
+                <a href="/user/product/{{ p.product_id }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                    <i class="fa fa-eye"></i> View Details
+                </a>
+
+                <!-- Add to Cart -->
+                <button class="btn btn-primary btn-sm w-100 add-to-cart"
+                        data-id="{{ p.product_id }}">
+                    <i class="fa fa-cart-plus"></i> Add to Cart
+                </button>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<script>
+document.querySelectorAll('.add-to-cart').forEach(btn => {
+    btn.addEventListener('click', function () {
+        let pid = this.getAttribute("data-id");
+
+        fetch(`/user/add-to-cart/${pid}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("cart-count").innerText = data.cart_count;
+                alert("Product added to cart!");
+            });
+    });
+});
+</script>
+
+{% endblock %}

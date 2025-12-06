@@ -1,9 +1,70 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="page-box">
-    <h1>About SmartCart</h1>
-    <p>SmartCart is a simple and efficient inventory management system designed for shop owners.</p>
+<h2 class="page-title">About SmartCart</h2>
+
+<div class="about-container">
+
+    <div class="about-card">
+        <h3>Our Mission</h3>
+        <p>
+            SmartCart aims to provide a clean, user-friendly, and secure online shopping platform 
+            for both customers and administrators. 
+        </p>
+    </div>
+
+    <div class="about-card">
+        <h3>What This Project Includes</h3>
+        <ul>
+            <li>Admin & User Authentication</li>
+            <li>OTP Based Registration</li>
+            <li>Product Management System</li>
+            <li>Secure Password Hashing</li>
+            <li>Search + Category Filters</li>
+            <li>Responsive UI</li>
+        </ul>
+    </div>
+
+    <div class="about-card">
+        <h3>Technologies Used</h3>
+        <ul>
+            <li>Flask (Python Backend)</li>
+            <li>MySQL Database</li>
+            <li>HTML, CSS, JS</li>
+            <li>Bootstrap (UI Framework)</li>
+            <li>Bcrypt Security</li>
+        </ul>
+    </div>
+
 </div>
+
+<style>
+.about-container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.about-card {
+    width: 320px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.about-card h3 {
+    font-size: 22px;
+}
+.about-card ul {
+    margin-left: 20px;
+}
+.page-title {
+    text-align: center;
+    margin: 25px 0;
+    font-size: 34px;
+}
+</style>
 
 {% endblock %}

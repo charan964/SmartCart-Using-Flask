@@ -1,11 +1,111 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="hero">
-    <h1>Welcome to SmartCart</h1>
-    <p>Your smart inventory management system</p>
-    <a href="/admin-signup" class="btn hero-btn">Get Started</a>
+<!-- HERO SECTION -->
+<div class="hero-section">
+    <h1>Welcome to <span class="brand">SmartCart</span></h1>
+    <p>Your smart shopping companion for a seamless and easy experience.</p>
+
+    <div class="hero-buttons">
+        <a href="/register" class="btn hero-btn">Get Started</a>
+        <a href="/about" class="btn hero-outline-btn">Learn More</a>
+    </div>
+</div>
+
+<!-- FEATURES SECTION -->
+<div class="features-container">
+
+    <div class="feature-card">
+        <i class="fa fa-shopping-cart feature-icon"></i>
+        <h3>Easy Shopping</h3>
+        <p>Browse thousands of products with a smooth shopping experience.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fa fa-lock feature-icon"></i>
+        <h3>Secure Login</h3>
+        <p>Admin & User login with OTP verification and hashed passwords.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fa fa-cubes feature-icon"></i>
+        <h3>Smart Product Management</h3>
+        <p>Admins can add, update, and manage products easily.</p>
+    </div>
 
 </div>
+
+<!-- ABOUT SNIPPET -->
+<div class="summary-card">
+    <h2>What is SmartCart?</h2>
+    <p>
+        SmartCart is a full-featured eCommerce platform built for learning and real-world practice. 
+        It includes admin product management, user shopping experience, authentication system, 
+        security features, OTP-based registration, search & filtering, and more.
+    </p>
+    <a href="/about" class="btn hero-outline-btn">Explore More</a>
+</div>
+
+<style>
+.hero-section {
+    text-align: center;
+    padding: 70px 20px;
+}
+.hero-section h1 {
+    font-size: 42px;
+    font-weight: 700;
+}
+.brand { color: #006eff; }
+.hero-section p {
+    font-size: 18px;
+    color: #555;
+    margin-top: 10px;
+}
+.hero-buttons {
+    margin-top: 25px;
+}
+.hero-btn {
+    background: #006eff;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 6px;
+    margin-right: 10px;
+}
+.hero-outline-btn {
+    border: 2px solid #006eff;
+    padding: 12px 25px;
+    color: #006eff;
+    border-radius: 6px;
+}
+.features-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    padding: 40px 20px;
+    flex-wrap: wrap;
+}
+.feature-card {
+    width: 300px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+.feature-icon {
+    font-size: 38px;
+    color: #006eff;
+    margin-bottom: 10px;
+}
+.summary-card {
+    width: 80%;
+    margin: 40px auto;
+    padding: 30px;
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+</style>
 
 {% endblock %}

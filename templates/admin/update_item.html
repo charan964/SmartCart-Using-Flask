@@ -1,42 +1,46 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="product-card-form">
+<h2 class="page-title">Update Product</h2>
 
-    <h2>Update Product</h2>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <p class="form-msg {{ category }}">{{ message }}</p>
-      {% endfor %}
-    {% endwith %}
+            <div class="mb-3 text-center">
+                <img src="/static/uploads/product_images/{{ product.image }}" width="120" height="120"
+                     style="object-fit:cover; border-radius:10px;">
+            </div>
 
-    <form method="POST" action="/admin/update-item/{{ product.product_id }}" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label>Product Name</label>
+                <input type="text" name="name" value="{{ product.name }}" class="form-control" required>
+            </div>
 
-        <label>Product Name</label>
-        <input type="text" name="name" value="{{ product.name }}" required>
+            <div class="mb-3">
+                <label>Description</label>
+                <textarea name="description" class="form-control" rows="3" required>{{ product.description }}</textarea>
+            </div>
 
-        <label>Description</label>
-        <textarea name="description" required>{{ product.description }}</textarea>
+            <div class="mb-3">
+                <label>Category</label>
+                <input type="text" name="category" value="{{ product.category }}" class="form-control" required>
+            </div>
 
-        <label>Category</label>
-        <input type="text" name="category" value="{{ product.category }}" required>
+            <div class="mb-3">
+                <label>Price (₹)</label>
+                <input type="number" step="0.01" name="price" value="{{ product.price }}" class="form-control" required>
+            </div>
 
-        <label>Price</label>
-        <input type="number" step="0.01" name="price" value="{{ product.price }}" required>
+            <div class="mb-3">
+                <label>Change Image (optional)</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
 
-        <label>Current Image</label><br>
-        <img src="/static/uploads/product_images/{{ product.image }}" class="update-img"><br><br>
+            <button class="btn btn-primary w-100">Save Changes</button>
 
-        <label>Choose New Image (Optional)</label>
-        <input type="file" name="image" class="file-input" accept="image/*">
-
-        <button class="btn submit-btn">Update Product</button>
-    </form>
-
-    <a href="/admin/item-list" class="btn back-btn" style="margin-top:15px; display:block;">Back</a>
-
+        </form>
+    </div>
 </div>
 
 {% endblock %}
