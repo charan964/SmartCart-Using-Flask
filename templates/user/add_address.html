@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+
+            <h3 class="mb-3">Add Delivery Address</h3>
+
+            <form action="/user/add-address" method="POST">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Full Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Phone Number</label>
+                        <input type="text" name="phone" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Pincode</label>
+                        <input type="text" name="pincode" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>State</label>
+                        <input type="text" name="state" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>City</label>
+                        <input type="text" name="city" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>House / Building</label>
+                    <input type="text" name="house" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>Area / Street / Landmark</label>
+                    <input type="text" name="area" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label>Address Type</label>
+                    <select name="address_type" class="form-control" required>
+                        <option value="Home">Home</option>
+                        <option value="Work">Work</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary">Save Address</button>
+                <a href="/user/checkout" class="btn btn-secondary">Cancel</a>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

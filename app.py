@@ -1,14 +1,27 @@
+# =========================
+# SMARTCART - FULL APP.PY
+# With Cart + Razorpay + Orders + Address + Invoice
+# =========================
+
 from flask import (
     Flask, render_template, request,
-    redirect, session, flash, jsonify
+    redirect, session, flash, jsonify,
+    make_response, url_for
 )
 from flask_mail import Mail, Message
 import mysql.connector
 import bcrypt
 import random
 import os
+import razorpay
+import traceback
+from io import BytesIO
+
 from werkzeug.utils import secure_filename
 import config
+
+# PDF library (DAY-14)
+from xhtml2pdf import pisa
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
@@ -36,6 +49,12 @@ app.config['ADMIN_UPLOAD_FOLDER'] = ADMIN_UPLOAD_FOLDER
 os.makedirs(PRODUCT_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(ADMIN_UPLOAD_FOLDER, exist_ok=True)
 
+# ============================================================
+# RAZORPAY CLIENT (Day 12)
+# ============================================================
+razorpay_client = razorpay.Client(
+    auth=(config.RAZORPAY_KEY_ID, config.RAZORPAY_KEY_SECRET)
+)
 
 # ============================================================
 # DB CONNECTION
@@ -50,10 +69,26 @@ def get_db_connection():
 
 
 def get_hash_bytes(db_value):
-    """Ensure bcrypt hash is bytes."""
+    """Ensure bcrypt hash value is bytes."""
     if isinstance(db_value, bytes):
         return db_value
     return db_value.encode("utf-8")
+
+
+# ============================================================
+# HELPER: PDF GENERATION (HTML → PDF)
+# ============================================================
+def generate_pdf_from_html(html_string):
+    """
+    Uses xhtml2pdf to convert HTML string to PDF (BytesIO).
+    Returns BytesIO object or None on error.
+    """
+    pdf = BytesIO()
+    result = pisa.CreatePDF(html_string, dest=pdf)
+    if result.err:
+        return None
+    pdf.seek(0)
+    return pdf
 
 
 # ============================================================
@@ -528,8 +563,6 @@ def admin_delete_item(item_id):
 
     flash("Product deleted successfully!", "success")
     return redirect('/admin/item-list')
-
-
 # ============================================================
 # ======================= USER MODULE ========================
 # ============================================================
@@ -572,7 +605,7 @@ def user_register():
     return redirect('/user-verify-otp')
 
 
-# ----------------- USER OTP VERIFY (GET + POST) -------------
+# ----------------- USER OTP VERIFY --------------------------
 @app.route('/user-verify-otp', methods=['GET', 'POST'])
 def user_verify_otp():
     if request.method == 'GET':
@@ -634,9 +667,9 @@ def user_login():
     session.clear()
     session['user_id'] = user['user_id']
     session['user_name'] = user['name']
+    session['user_email'] = user['email']
 
-    cart = session.get('cart', {})
-    session['cart_count'] = sum(item['quantity'] for item in cart.values()) if cart else 0
+    session['cart_count'] = sum(item['quantity'] for item in session.get('cart', {}).values())
 
     flash("User login successful!", "success")
     return redirect('/user-dashboard')
@@ -646,7 +679,7 @@ def user_login():
 @app.route('/user-dashboard')
 def user_dashboard():
     if 'user_id' not in session:
-        flash("Please login as User!", "danger")
+        flash("Please login!", "danger")
         return redirect('/user-login')
 
     return render_template("user/user_home.html", user_name=session['user_name'])
@@ -660,103 +693,17 @@ def user_logout():
     return redirect('/user-login')
 
 
-# ----------------- USER FORGOT PASSWORD ---------------------
-@app.route('/user-forgot-password', methods=['GET', 'POST'])
-def user_forgot_password():
-    if request.method == 'GET':
-        return render_template("user/user_forgot_password.html")
-
-    email = request.form['email']
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if not user:
-        flash("Email not found!", "danger")
-        return redirect('/user-forgot-password')
-
-    reset_token = str(random.randint(100000, 999999))
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET reset_token=%s WHERE email=%s",
-                   (reset_token, email))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    reset_link = f"http://127.0.0.1:5000/user-reset-password/{reset_token}"
-
-    msg = Message(
-        subject="SmartCart User Password Reset",
-        sender=config.MAIL_USERNAME,
-        recipients=[email]
-    )
-    msg.body = f"Click here to reset your password:\n{reset_link}"
-    mail.send(msg)
-
-    flash("Reset link sent to your email.", "success")
-    return redirect('/user-forgot-password')
-
-
-# ----------------- USER RESET PASSWORD (TOKEN PAGE) ----------
-@app.route('/user-reset-password/<token>')
-def user_reset_password_token(token):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT email FROM users WHERE reset_token=%s", (token,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if not user:
-        flash("Invalid or expired reset link!", "danger")
-        return redirect('/user-login')
-
-    session['reset_user_email'] = user['email']
-    return render_template("user/user_reset_password.html")
-
-
-# ----------------- USER RESET PASSWORD (SUBMIT NEW) ----------
-@app.route('/user-reset-password', methods=['POST'])
-def user_reset_password_submit():
-    email = session.get('reset_user_email')
-    password = request.form['password']
-
-    if not email:
-        flash("Session expired!", "danger")
-        return redirect('/user-login')
-
-    hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE users SET password=%s, reset_token=NULL WHERE email=%s
-    """, (hashed_pw, email))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    session.pop('reset_user_email', None)
-
-    flash("Password updated successfully! Please login.", "success")
-    return redirect('/user-login')
-
-
-# ----------------- USER VIEW ALL PRODUCTS (SEARCH + FILTER) --
+# ============================================================
+# USER PRODUCTS
+# ============================================================
 @app.route('/user/products')
 def user_products():
     if 'user_id' not in session:
-        flash("Please login as User!", "danger")
+        flash("Please login!", "danger")
         return redirect('/user-login')
 
-    search = request.args.get('search', '')
-    category = request.args.get('category', '')
+    search = request.args.get("search", "")
+    category = request.args.get("category", "")
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -769,35 +716,30 @@ def user_products():
 
     if search:
         query += " AND name LIKE %s"
-        params.append("%" + search + "%")
+        params.append(f"%{search}%")
 
     if category:
-        query += " AND category = %s"
+        query += " AND category=%s"
         params.append(category)
 
     cursor.execute(query, params)
     products = cursor.fetchall()
-
     cursor.close()
     conn.close()
 
-    return render_template(
-        "user/user_products.html",
-        products=products,
-        categories=categories
-    )
+    return render_template("user/user_products.html", products=products, categories=categories)
 
 
-# ----------------- USER VIEW SINGLE PRODUCT ------------------
-@app.route('/user/product/<int:product_id>')
-def user_view_product(product_id):
+# ----------------- VIEW PRODUCT ------------------------------
+@app.route('/user/product/<int:pid>')
+def user_view_product(pid):
     if 'user_id' not in session:
-        flash("Please login as User!", "danger")
+        flash("Please login!", "danger")
         return redirect('/user-login')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM products WHERE product_id=%s", (product_id,))
+    cursor.execute("SELECT * FROM products WHERE product_id=%s", (pid,))
     product = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -810,14 +752,14 @@ def user_view_product(product_id):
 
 
 # ============================================================
-# ============ DAY-11: SESSION CART SYSTEM ===================
+# CART SYSTEM (DAY 11)
 # ============================================================
 
-# ----------------- ADD TO CART (AJAX) -----------------------
+# Add to Cart
 @app.route('/user/add-to-cart/<int:pid>')
 def user_add_to_cart(pid):
     if 'user_id' not in session:
-        return jsonify({"status": "error", "message": "Please login first"})
+        return jsonify({"status": "error", "message": "Login required"})
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -848,36 +790,21 @@ def user_add_to_cart(pid):
     return jsonify({"status": "success", "cart_count": session["cart_count"]})
 
 
-# ----------------- CART COUNT (OPTIONAL API) ----------------
-@app.route("/user/cart-count")
-def user_cart_count():
-    cart = session.get("cart", {})
-    count = sum(item["quantity"] for item in cart.values())
-    return jsonify({"count": count})
-
-
-# ----------------- VIEW CART PAGE ---------------------------
+# View Cart
 @app.route('/user/cart')
 def user_cart():
     if 'user_id' not in session:
-        flash("Please login first!", "danger")
+        flash("Please login!", "danger")
         return redirect('/user-login')
 
     cart = session.get("cart", {})
-    grand_total = sum(item["price"] * item["quantity"] for item in cart.values())
+    total = sum(item["price"] * item["quantity"] for item in cart.values())
 
-    return render_template("user/user_cart.html",
-                           cart=cart,
-                           grand_total=grand_total)
+    return render_template("user/user_cart.html", cart=cart, grand_total=total)
 
 
-# ----------------- INCREASE QUANTITY ------------------------
 @app.route('/user/cart/increase/<pid>')
-def cart_increase(pid):
-    if 'user_id' not in session:
-        flash("Please login first!", "danger")
-        return redirect('/user-login')
-
+def cart_inc(pid):
     cart = session.get("cart", {})
     pid = str(pid)
 
@@ -885,18 +812,12 @@ def cart_increase(pid):
         cart[pid]["quantity"] += 1
 
     session["cart"] = cart
-    session["cart_count"] = sum(item["quantity"] for item in cart.values())
-
+    session["cart_count"] = sum(i["quantity"] for i in cart.values())
     return redirect('/user/cart')
 
 
-# ----------------- DECREASE QUANTITY ------------------------
 @app.route('/user/cart/decrease/<pid>')
-def cart_decrease(pid):
-    if 'user_id' not in session:
-        flash("Please login first!", "danger")
-        return redirect('/user-login')
-
+def cart_dec(pid):
     cart = session.get("cart", {})
     pid = str(pid)
 
@@ -906,18 +827,12 @@ def cart_decrease(pid):
             cart.pop(pid)
 
     session["cart"] = cart
-    session["cart_count"] = sum(item["quantity"] for item in cart.values())
-
+    session["cart_count"] = sum(i["quantity"] for i in cart.values())
     return redirect('/user/cart')
 
 
-# ----------------- REMOVE ITEM FROM CART --------------------
 @app.route('/user/cart/remove/<pid>')
 def cart_remove(pid):
-    if 'user_id' not in session:
-        flash("Please login first!", "danger")
-        return redirect('/user-login')
-
     cart = session.get("cart", {})
     pid = str(pid)
 
@@ -925,25 +840,408 @@ def cart_remove(pid):
         cart.pop(pid)
 
     session["cart"] = cart
-    session["cart_count"] = sum(item["quantity"] for item in cart.values())
-
+    session["cart_count"] = sum(i["quantity"] for i in cart.values())
     return redirect('/user/cart')
 
 
-# ----------------- CLEAR CART -------------------------------
-@app.route('/user/cart/clear')
-def clear_cart():
-    if 'user_id' not in session:
+# ============================================================
+# ADDRESS SYSTEM (DAY 13)
+# ============================================================
+@app.route("/user/add-address", methods=["POST"])
+def add_address():
+    if "user_id" not in session:
         flash("Please login first!", "danger")
+        return redirect("/user-login")
+
+    name = request.form.get("name")
+    phone = request.form.get("phone")
+    pincode = request.form.get("pincode")
+    state = request.form.get("state")
+    city = request.form.get("city")
+    house = request.form.get("house")
+    area = request.form.get("area")   # ✅ Correct field
+    address_type = request.form.get("address_type")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO addresses (user_id, name, phone, pincode, state, city, house, area, address_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (session["user_id"], name, phone, pincode, state, city, house, area, address_type))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash("Address added successfully!", "success")
+    return redirect("/user/select-address")
+
+
+
+
+# -----------select Adress--------------------------------------------------------
+
+@app.route("/user/select-address", methods=["GET", "POST"])
+def select_address():
+    if "user_id" not in session:
+        flash("Please login first!", "danger")
+        return redirect("/user-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM addresses WHERE user_id=%s", (session["user_id"],))
+    addresses = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # POST → User selected an address
+    if request.method == "POST":
+        address_id = request.form.get("address_id")
+
+        if not address_id:
+            flash("Please select an address!", "danger")
+            return redirect("/user/select-address")
+
+        # Save selected address in session
+        session["selected_address_id"] = address_id
+
+        # Now go to Razorpay payment screen
+        return redirect("/user/pay")
+
+    # GET → show all saved addresses
+    return render_template("user/select_address.html", addresses=addresses)
+
+# ============================================================
+# PAYMENT PAGE ENTRY AFTER ADDRESS SELECTION
+# ============================================================
+@app.route("/user/pay")
+def user_pay():
+    if "user_id" not in session:
+        flash("Please login first!", "danger")
+        return redirect("/user-login")
+
+    # Check if address is selected
+    address_id = session.get("selected_address_id")
+    if not address_id:
+        flash("Please select a delivery address!", "warning")
+        return redirect("/user/select-address")
+
+    # Load cart
+    cart = session.get("cart", {})
+    if not cart:
+        flash("Your cart is empty!", "warning")
+        return redirect("/user/cart")
+
+    # Calculate total
+    total = sum(item["price"] * item["quantity"] for item in cart.values())
+    razorpay_amount = int(total * 100)
+
+    # Create Razorpay order
+    order = razorpay_client.order.create({
+        "amount": razorpay_amount,
+        "currency": "INR",
+        "payment_capture": "1"
+    })
+
+    session["razorpay_order_id"] = order["id"]
+
+    return render_template(
+        "user/payment.html",
+        amount=total,
+        razorpay_amount=razorpay_amount,
+        key_id=config.RAZORPAY_KEY_ID,
+        order_id=order["id"]
+    )
+
+
+# ============================================================
+# CHECKOUT → RAZORPAY ORDER CREATION
+# ============================================================
+
+@app.route('/user/checkout/<int:address_id>')
+def checkout(address_id):
+    if 'user_id' not in session:
+        flash("Login required!", "danger")
         return redirect('/user-login')
 
-    session["cart"] = {}
-    session["cart_count"] = 0
+    session['selected_address'] = address_id
 
-    return redirect('/user/cart')
+    cart = session.get("cart", {})
+    if not cart:
+        flash("Your cart is empty!", "danger")
+        return redirect('/user/cart')
+
+    total = sum(item["price"] * item["quantity"] for item in cart.values())
+    razorpay_amount = int(total * 100)  # convert to paise
+
+    # Create Razorpay order
+    rzp_order = razorpay_client.order.create({
+        "amount": razorpay_amount,
+        "currency": "INR",
+        "payment_capture": "1"
+    })
+
+    session['razorpay_order_id'] = rzp_order['id']
+
+    return render_template(
+        "user/payment.html",
+        amount=total,
+        razorpay_amount=razorpay_amount,
+        key_id=config.RAZORPAY_KEY_ID,
+        order_id=rzp_order['id']
+    )
+# ============================================================
+# ============ DAY-13: VERIFY PAYMENT & STORE ORDER ==========
+# ============================================================
+
+# ============================================================
+# VERIFY PAYMENT + STORE ORDER (FINAL WORKING VERSION)
+# ============================================================
+@app.route('/verify-payment', methods=['POST'])
+def verify_payment():
+    if 'user_id' not in session:
+        flash("Please login to complete the payment.", "danger")
+        return redirect('/user-login')
+
+    # Values from Razorpay script
+    razorpay_payment_id = request.form.get('razorpay_payment_id')
+    razorpay_order_id = request.form.get('razorpay_order_id')
+    razorpay_signature = request.form.get('razorpay_signature')
+
+    # Validate required values
+    if not (razorpay_payment_id and razorpay_order_id and razorpay_signature):
+        flash("Payment verification failed!", "danger")
+        return redirect('/user/cart')
+
+    # Verify using Razorpay SDK
+    try:
+        razorpay_client.utility.verify_payment_signature({
+            "razorpay_order_id": razorpay_order_id,
+            "razorpay_payment_id": razorpay_payment_id,
+            "razorpay_signature": razorpay_signature
+        })
+
+    except Exception as e:
+        print("Verification Error:", e)
+        flash("Payment verification failed!", "danger")
+        return redirect('/user/cart')
+
+    # Get user & cart details
+    user_id = session['user_id']
+    cart = session.get('cart', {})
+
+    if not cart:
+        flash("Cart empty — cannot place order.", "danger")
+        return redirect('/user/products')
+
+    # Compute total
+    total_amount = sum(item['price'] * item['quantity'] for item in cart.values())
+
+    # Get selected delivery address
+    address_id = session.get("selected_address_id")
+
+    if not address_id:
+        flash("Delivery address missing!", "danger")
+        return redirect("/user/select-address")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Insert order (WITH address_id)
+        cursor.execute("""
+            INSERT INTO orders (user_id, address_id, razorpay_order_id, razorpay_payment_id, amount, payment_status)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            user_id,
+            address_id,
+            razorpay_order_id,
+            razorpay_payment_id,
+            total_amount,
+            "paid"
+        ))
+
+        order_db_id = cursor.lastrowid  # newly created order ID
+
+        # Insert order items
+        for pid_str, item in cart.items():
+            cursor.execute("""
+                INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                order_db_id,
+                int(pid_str),
+                item["name"],
+                item["quantity"],
+                item["price"]
+            ))
+
+        conn.commit()
+
+        # Clear cart
+        session.pop("cart", None)
+        session["cart_count"] = 0
+
+        flash("Payment successful! Order placed.", "success")
+        return redirect(f"/user/order-success/{order_db_id}")
+
+    except Exception as e:
+        conn.rollback()
+        print("Order Save Error:", e)
+        flash("Error saving order!", "danger")
+        return redirect('/user/cart')
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
-# ----------------- CHECKOUT PAGE ----------------------------
+# ============================================================
+# ORDER SUCCESS + MY ORDERS + TRACK ORDER
+# ============================================================
+
+@app.route('/user/order-success/<int:order_db_id>')
+def order_success(order_db_id):
+    if 'user_id' not in session:
+        flash("Please login!", "danger")
+        return redirect('/user-login')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT * FROM orders
+        WHERE order_id=%s AND user_id=%s
+    """, (order_db_id, session['user_id']))
+    order = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT * FROM order_items
+        WHERE order_id=%s
+    """, (order_db_id,))
+    items = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if not order:
+        flash("Order not found.", "danger")
+        return redirect('/user/products')
+
+    return render_template("user/order_success.html", order=order, items=items)
+
+
+@app.route('/user/my-orders')
+def my_orders():
+    if 'user_id' not in session:
+        flash("Please login!", "danger")
+        return redirect('/user-login')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT * FROM orders
+        WHERE user_id=%s
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+    orders = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("user/my_orders.html", orders=orders)
+
+
+
+
+# ============================================================
+# ============ DAY-14: INVOICE PDF GENERATION =================
+# ============================================================
+
+from io import BytesIO
+from xhtml2pdf import pisa
+
+def generate_pdf(html):
+    """
+    Convert HTML string to PDF (BytesIO).
+    """
+    pdf = BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=pdf)
+    if pisa_status.err:
+        return None
+    pdf.seek(0)
+    return pdf
+
+@app.route("/user/download-invoice/<int:order_id>")
+def download_invoice(order_id):
+    if 'user_id' not in session:
+        flash("Please login to download invoice.", "danger")
+        return redirect('/user-login')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # JOIN orders + address
+    cursor.execute("""
+        SELECT o.*, a.name AS a_name, a.phone AS a_phone, a.pincode AS a_pincode,
+               a.state AS a_state, a.city AS a_city, a.house AS a_house,
+               a.area AS a_area, a.address_type AS a_type
+        FROM orders o
+        LEFT JOIN addresses a ON o.address_id = a.address_id
+        WHERE o.order_id=%s AND o.user_id=%s
+    """, (order_id, session['user_id']))
+    order = cursor.fetchone()
+
+    cursor.execute("SELECT * FROM order_items WHERE order_id=%s", (order_id,))
+    items = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if not order:
+        flash("Order not found.", "danger")
+        return redirect("/user/my-orders")
+
+    # Generate invoice PDF
+    html = render_template("user/invoice.html", order=order, items=items)
+
+    pdf = generate_pdf(html)
+    if not pdf:
+        flash("Error generating PDF.", "danger")
+        return redirect("/user/my-orders")
+
+    response = make_response(pdf.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f"attachment; filename=invoice_{order_id}.pdf"
+    return response
+
+
+@app.route("/user/track/<int:order_id>")
+def user_track_order(order_id):
+
+    if "user_id" not in session:
+        flash("Please login!", "danger")
+        return redirect("/user-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT * FROM orders 
+        WHERE order_id=%s AND user_id=%s
+    """, (order_id, session['user_id']))
+    order = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if not order:
+        flash("Order not found!", "danger")
+        return redirect("/user/my-orders")
+
+    return render_template("user/track_order.html", order=order)
 @app.route('/user/checkout')
 def user_checkout():
     if "user_id" not in session:

@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container">
+
+    <div class="alert alert-success">
+        <h4><i class="fa fa-check-circle"></i> Order Placed Successfully!</h4>
+        Your order has been confirmed.
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            <h5>Order ID: {{ order.order_id }}</h5>
+            <h6 class="text-success">Amount Paid: ₹{{ order.amount }}</h6>
+
+            <p class="text-muted">Payment Status: {{ order.payment_status }}</p>
+
+            <hr>
+
+            <h5>Items</h5>
+            {% for item in items %}
+                <p>
+                    {{ item.product_name }}  
+                    (Qty: {{ item.quantity }})  
+                    — ₹{{ item.price * item.quantity }}
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <a href="/user/my-orders" class="btn btn-primary">My Orders</a>
+    <a href="/user/track/{{ order.order_id }}" class="btn btn-info text-white">Track Order</a>
+    <a href="/user/download-invoice/{{ order.order_id }}" class="btn btn-success">Download Invoice</a>
+
+</div>
+
+{% endblock %}

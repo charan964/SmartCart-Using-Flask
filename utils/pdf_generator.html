@@ -1,0 +1,8 @@
+from xhtml2pdf import pisa
+from io import BytesIO
+
+def generate_pdf(html):
+    pdf = BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=pdf)
+
+    return None if pisa_status.err else pdf

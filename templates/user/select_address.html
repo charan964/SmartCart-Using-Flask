@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3>Select Delivery Address</h3>
+
+    {% if addresses|length == 0 %}
+
+        <p>No saved addresses.</p>
+        <a href="/user/add-address" class="btn btn-primary">Add New Address</a>
+
+    {% else %}
+
+        <div class="row">
+
+            {% for addr in addresses %}
+            <div class="col-md-6">
+                <div class="card shadow mb-3">
+                    <div class="card-body">
+
+                        <h5>{{ addr.name }} ({{ addr.address_type }})</h5>
+
+                        <p class="mb-1">{{ addr.house }}, {{ addr.area }}</p>
+                        <p class="mb-1">{{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</p>
+                        <p class="mb-1">📞 {{ addr.phone }}</p>
+
+                        <!-- FIXED PART — USE POST FORM -->
+                        <form action="/user/select-address" method="POST">
+                            <input type="hidden" name="address_id" value="{{ addr.address_id }}">
+                            <button type="submit" class="btn btn-primary mt-2">
+                                Deliver to this Address
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,65 +1,74 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="container py-4">
+<div class="container mt-4">
 
-    <h2 class="fw-bold mb-4">Checkout</h2>
+    <h3 class="mb-3">Checkout</h3>
 
+    {% if cart|length == 0 %}
+        <div class="alert alert-warning">
+            Your cart is empty.
+        </div>
+        <a href="/user/products" class="btn btn-primary">Start Shopping</a>
+    {% else %}
+
+    <!-- ================= CART SUMMARY ================= -->
     <div class="row">
 
-        <!-- LEFT: ITEMS -->
+        <!-- LEFT — CART ITEMS -->
         <div class="col-md-8">
 
-            <div class="card shadow-sm p-3">
-                <h4 class="fw-bold mb-3">Order Summary</h4>
-
-                {% for pid, item in cart.items() %}
-                <div class="d-flex align-items-center border-bottom py-2">
+            {% for pid, item in cart.items() %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body d-flex">
 
                     <img src="/static/uploads/product_images/{{ item.image }}" 
-                         class="rounded" width="70">
+                         width="90" height="90" class="rounded me-3">
 
-                    <div class="ms-3">
-                        <h5 class="mb-1">{{ item.name }}</h5>
-                        <p class="mb-1">₹ {{ item.price }} x {{ item.quantity }}</p>
-                        <strong>₹ {{ item.price * item.quantity }}</strong>
+                    <div>
+                        <h5>{{ item.name }}</h5>
+                        <p class="text-muted m-0">
+                            Qty: {{ item.quantity }}
+                        </p>
+                        <h6 class="text-success mt-2">
+                            ₹{{ item.price * item.quantity }}
+                        </h6>
                     </div>
+
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
 
         </div>
 
-        <!-- RIGHT: BILLING -->
+        <!-- RIGHT — PRICE DETAILS -->
         <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
 
-            <div class="card shadow-sm p-3">
+                    <h5 class="mb-3">Price Details</h5>
 
-                <h4 class="fw-bold">Price Details</h4>
-                <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal</span>
+                        <span>₹{{ grand_total }}</span>
+                    </div>
 
-                <p class="d-flex justify-content-between">
-                    <span>Total Items:</span>
-                    <strong>{{ cart|length }}</strong>
-                </p>
+                    <hr>
 
-                <p class="d-flex justify-content-between">
-                    <span>Total Amount:</span>
-                    <strong>₹ {{ grand_total }}</strong>
-                </p>
+                    <div class="d-grid mt-3">
+                        <!-- Proceed to address selection -->
+                        <a href="/user/select-address" class="btn btn-primary btn-lg">
+                            Proceed to Buy
+                        </a>
+                    </div>
 
-                <hr>
-
-                <a href="#" class="btn btn-success btn-lg w-100 mt-2">
-                    <i class="fa fa-check-circle"></i> Place Order
-                </a>
-
+                </div>
             </div>
-
         </div>
 
     </div>
 
+    {% endif %}
 </div>
 
 {% endblock %}

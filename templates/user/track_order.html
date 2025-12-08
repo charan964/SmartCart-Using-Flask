@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+.step-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+}
+.step {
+    text-align: center;
+    width: 20%;
+}
+.step i {
+    font-size: 40px;
+    color: #ccc;
+}
+.active i {
+    color: #0d6efd !important;
+}
+</style>
+
+<div class="container mt-5">
+
+    <h3>Track Order #{{ order.order_id }}</h3>
+    <p class="text-muted">Current status: <strong>{{ order.status }}</strong></p>
+
+    <div class="step-box">
+
+        <div class="step {% if order.status in ['Placed','Packed','Shipped','Out for Delivery','Delivered'] %}active{% endif %}">
+            <i class="fa-solid fa-file-circle-check"></i>
+            <p>Placed</p>
+        </div>
+
+        <div class="step {% if order.status in ['Packed','Shipped','Out for Delivery','Delivered'] %}active{% endif %}">
+            <i class="fa-solid fa-box"></i>
+            <p>Packed</p>
+        </div>
+
+        <div class="step {% if order.status in ['Shipped','Out for Delivery','Delivered'] %}active{% endif %}">
+            <i class="fa-solid fa-truck-fast"></i>
+            <p>Shipped</p>
+        </div>
+
+        <div class="step {% if order.status in ['Out for Delivery','Delivered'] %}active{% endif %}">
+            <i class="fa-solid fa-truck"></i>
+            <p>Out for Delivery</p>
+        </div>
+
+        <div class="step {% if order.status == 'Delivered' %}active{% endif %}">
+            <i class="fa-solid fa-handshake"></i>
+            <p>Delivered</p>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

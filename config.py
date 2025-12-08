@@ -21,3 +21,7 @@ MAIL_PORT = 587
 MAIL_USE_TLS = True
 MAIL_USERNAME = 'charantejamamidi001@gmail.com'
 MAIL_PASSWORD = 'wnzw ofcr dozk xxwd'   # Gmail App Password
+
+
+RAZORPAY_KEY_ID = "rzp_test_RoPgZkhC0MWnuA"
+RAZORPAY_KEY_SECRET = "kxE2v12cN6XFsUogaU0RNR1E"

@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h3 class="mb-3">My Orders</h3>
+
+{% if orders|length == 0 %}
+    <div class="alert alert-warning">No orders placed yet.</div>
+    <a href="/user/products" class="btn btn-primary">Shop Now</a>
+{% else %}
+
+<div class="row">
+    {% for o in orders %}
+    <div class="col-md-6">
+        <div class="card shadow mb-3">
+
+            <div class="card-body">
+                <h5>Order #{{ o.order_id }}</h5>
+
+                <p class="text-muted m-0">
+                    Amount: <b>₹{{ o.amount }}</b>
+                </p>
+
+                <p class="m-0">
+                    Status:
+                    {% if o.status == "Delivered" %}
+                        <span class="badge bg-success">Delivered</span>
+                    {% elif o.status == "Shipped" %}
+                        <span class="badge bg-info text-dark">Shipped</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">{{ o.status }}</span>
+                    {% endif %}
+                </p>
+
+                <hr>
+
+                <!-- Buttons -->
+                <a href="/user/order-success/{{ o.order_id }}" class="btn btn-sm btn-primary">View Details</a>
+                <a href="/user/track/{{ o.order_id }}" class="btn btn-sm btn-info text-white">Track Order</a>
+                <a href="/user/download-invoice/{{ o.order_id }}" class="btn btn-sm btn-success">Download Invoice</a>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+
+{% endblock %}
