@@ -33,11 +33,11 @@
             display: inline-block;
         }
 
-        /* ---------- FIXED FOOTER ---------- */
+        /* ---------- FIXED FOOTER (Improved no-overlap) ---------- */
         .footer {
             background: #111;
             color: white;
-            padding: 10px;
+            padding: 12px;
             text-align: center;
             width: 100%;
             position: fixed;
@@ -46,8 +46,13 @@
             z-index: 999;
         }
 
+        /* Add large buffer so content never hides under footer */
         body {
-            padding-bottom: 60px; /* space so footer does not cover content */
+            padding-bottom: 120px !important;
+        }
+
+        .content {
+            margin-bottom: 140px !important;
         }
     </style>
 </head>
@@ -89,7 +94,6 @@
                     </a>
                 </li>
 
-                <!-- ⭐ My Orders (Restored) -->
                 <li class="nav-item">
                     <a class="nav-link" href="/user/my-orders">
                         <i class="fa fa-box"></i> My Orders
@@ -134,7 +138,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, msg in messages %}
-          <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show" role="alert">
+          <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show">
             {{ msg }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>

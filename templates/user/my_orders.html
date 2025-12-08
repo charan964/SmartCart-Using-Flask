@@ -1,14 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h3 class="mb-3">My Orders</h3>
+<h3 class="mb-3 text-center">My Orders</h3>
 
 {% if orders|length == 0 %}
-    <div class="alert alert-warning">No orders placed yet.</div>
-    <a href="/user/products" class="btn btn-primary">Shop Now</a>
+    <div class="alert alert-warning text-center">No orders placed yet.</div>
+    <div class="text-center">
+        <a href="/user/products" class="btn btn-primary">Shop Now</a>
+    </div>
+
 {% else %}
 
-<div class="row">
+<div class="row my-orders-wrapper">
     {% for o in orders %}
     <div class="col-md-6">
         <div class="card shadow mb-3">
@@ -45,5 +48,16 @@
 </div>
 
 {% endif %}
+
+<style>
+/* Prevent footer overlapping orders list */
+.my-orders-wrapper {
+    margin-bottom: 140px;
+}
+
+h3 {
+    margin-bottom: 20px;
+}
+</style>
 
 {% endblock %}

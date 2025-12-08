@@ -3,7 +3,7 @@
 
 <h2 class="page-title">Admin Profile</h2>
 
-<div class="row justify-content-center">
+<div class="row justify-content-center admin-profile-wrapper">
     <div class="col-md-6">
         <div class="card p-4 shadow-sm">
 
@@ -18,6 +18,7 @@
             </div>
 
             <form method="POST" enctype="multipart/form-data">
+                
                 <div class="mb-3">
                     <label>Name</label>
                     <input type="text" name="name" value="{{ admin.name }}" class="form-control" required>
@@ -44,5 +45,17 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Prevent footer overlap */
+.admin-profile-wrapper {
+    margin-bottom: 140px; /* ⭐ Footer-safe spacing */
+}
+
+.page-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+</style>
 
 {% endblock %}

@@ -3,7 +3,7 @@
 
 <h2 class="page-title">Add New Product</h2>
 
-<div class="row justify-content-center">
+<div class="row justify-content-center add-product-wrapper">
     <div class="col-md-6">
         <form method="POST" action="/admin/add-item" enctype="multipart/form-data" class="card p-4 shadow-sm">
 
@@ -37,5 +37,17 @@
         </form>
     </div>
 </div>
+
+<style>
+/* Prevent footer overlap */
+.add-product-wrapper {
+    margin-bottom: 140px;   /* ⭐ same fix applied here */
+}
+
+.page-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+</style>
 
 {% endblock %}
