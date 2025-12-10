@@ -1,19 +1,103 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2 class="page-title">Register As</h2>
+<div class="auth-select-container">
 
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <a href="/admin-signup" class="btn btn-outline-primary w-100 mb-3">
-            <i class="fa-solid fa-user-tie me-2"></i> Admin Register
-        </a>
+    <div class="auth-card">
+        <h2 class="auth-title">Register As</h2>
+
+        <div class="auth-options">
+
+            <!-- User Register -->
+            <a href="/user-register" class="auth-box">
+                <div class="auth-content">
+                    <i class="fa-solid fa-user-plus auth-icon"></i>
+                    <span class="auth-text">User</span>
+                </div>
+            </a>
+
+            <!-- Admin Register -->
+            <a href="/admin-signup" class="auth-box">
+                <div class="auth-content">
+                    <i class="fa-solid fa-user-shield auth-icon"></i>
+                    <span class="auth-text">Admin</span>
+                </div>
+            </a>
+
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/user-register" class="btn btn-outline-success w-100 mb-3">
-            <i class="fa-solid fa-user me-2"></i> User Register
-        </a>
-    </div>
+
 </div>
+
+<style>
+/* Center box */
+.auth-select-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70vh;
+}
+
+/* Main white card */
+.auth-card {
+    width: 350px;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.auth-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+
+/* Options container */
+.auth-options {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Clickable box */
+.auth-box {
+    width: 45%;
+    background: #f5f8ff;
+    padding: 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #004ac1;
+    font-weight: 600;
+    transition: 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Side-by-side alignment */
+.auth-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Icon */
+.auth-icon {
+    font-size: 26px;
+}
+
+/* Text */
+.auth-text {
+    font-size: 18px;
+}
+
+/* Hover effect */
+.auth-box:hover {
+    background: #006eff;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+</style>
 
 {% endblock %}

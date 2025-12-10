@@ -1,6 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<!-- PAGE WRAPPER WITH SAFE FOOTER SPACING -->
+<div class="pb-5"><!-- 👈 prevents footer overlap -->
+
 <!-- HERO SECTION -->
 <div class="hero-section">
     <h1>Welcome to <span class="brand">SmartCart</span></h1>
@@ -39,12 +42,14 @@
 <div class="summary-card">
     <h2>What is SmartCart?</h2>
     <p>
-        SmartCart is a full-featured eCommerce platform built for learning and real-world practice. 
-        It includes admin product management, user shopping experience, authentication system, 
+        SmartCart is a full-featured eCommerce platform built for learning and real-world practice.
+        It includes admin product management, user shopping experience, authentication system,
         security features, OTP-based registration, search & filtering, and more.
     </p>
     <a href="/about" class="btn hero-outline-btn">Explore More</a>
 </div>
+
+</div> <!-- END FOOTER SAFE WRAPPER -->
 
 <style>
 .hero-section {

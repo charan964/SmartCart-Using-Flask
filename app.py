@@ -1,6 +1,11 @@
 # =========================
 # SMARTCART - FULL APP.PY
-# With Cart + Razorpay + Orders + Address + Invoice
+# With Cart + Razorpay + Orders + Address + Invoice + Stock + Admin Orders
+# =========================
+
+# =========================
+# SMARTCART - FULL APP.PY
+# With Cart + Razorpay + Orders + Address + Invoice + Stock + Admin Orders
 # =========================
 
 from flask import (
@@ -14,8 +19,8 @@ import bcrypt
 import random
 import os
 import razorpay
-import traceback
 from io import BytesIO
+from datetime import timedelta            # ✅ NEW (SESSION)
 
 from werkzeug.utils import secure_filename
 import config
@@ -25,6 +30,12 @@ from xhtml2pdf import pisa
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
+
+# ============================
+# SESSION LIFETIME (1 YEAR)
+# ============================
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)   # ✅ NEW
+
 
 # ============================================================
 # EMAIL CONFIG
@@ -76,16 +87,15 @@ def get_hash_bytes(db_value):
 
 
 # ============================================================
-# HELPER: PDF GENERATION (HTML → PDF)
+# PDF GENERATION (HTML → PDF)
 # ============================================================
-def generate_pdf_from_html(html_string):
+def generate_pdf(html):
     """
-    Uses xhtml2pdf to convert HTML string to PDF (BytesIO).
-    Returns BytesIO object or None on error.
+    Convert HTML string to PDF (BytesIO).
     """
     pdf = BytesIO()
-    result = pisa.CreatePDF(html_string, dest=pdf)
-    if result.err:
+    pisa_status = pisa.CreatePDF(html, dest=pdf)
+    if pisa_status.err:
         return None
     pdf.seek(0)
     return pdf
@@ -223,9 +233,11 @@ def admin_login():
     session.clear()
     session['admin_id'] = admin['admin_id']
     session['admin_name'] = admin['name']
+    session.permanent = True        # ✅ NEW (session lasts 1 year)
 
     flash("Admin login successful!", "success")
     return redirect('/admin-dashboard')
+
 
 
 # ----------------- ADMIN DASHBOARD --------------------------
@@ -380,7 +392,7 @@ def admin_profile():
     return redirect('/admin/profile')
 
 
-# ----------------- ADMIN ADD PRODUCT ------------------------
+# ----------------- ADMIN ADD PRODUCT (with stock) -----------
 @app.route('/admin/add-item', methods=['GET', 'POST'])
 def admin_add_item():
     if 'admin_id' not in session:
@@ -394,6 +406,7 @@ def admin_add_item():
     desc = request.form['description']
     category = request.form['category']
     price = request.form['price']
+    stock_quantity = request.form.get('stock_quantity', '0')  # NEW
     image_file = request.files['image']
 
     if not image_file or not image_file.filename:
@@ -407,9 +420,9 @@ def admin_add_item():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO products (name, description, category, price, image)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (name, desc, category, price, filename))
+        INSERT INTO products (name, description, category, price, image, stock_quantity)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (name, desc, category, price, filename, stock_quantity))
     conn.commit()
     cursor.close()
     conn.close()
@@ -476,7 +489,7 @@ def admin_view_item(item_id):
     return render_template("admin/view_item.html", product=product)
 
 
-# ----------------- ADMIN UPDATE PRODUCT ---------------------
+# ----------------- ADMIN UPDATE PRODUCT (with stock) --------
 @app.route('/admin/update-item/<int:item_id>', methods=['GET', 'POST'])
 def admin_update_item(item_id):
     if 'admin_id' not in session:
@@ -503,6 +516,7 @@ def admin_update_item(item_id):
     desc = request.form['description']
     category = request.form['category']
     price = request.form['price']
+    stock_quantity = request.form.get('stock_quantity', product.get('stock_quantity', 0))
     image_file = request.files['image']
     old_image = product['image']
 
@@ -521,9 +535,9 @@ def admin_update_item(item_id):
 
     cursor.execute("""
         UPDATE products
-        SET name=%s, description=%s, category=%s, price=%s, image=%s
+        SET name=%s, description=%s, category=%s, price=%s, image=%s, stock_quantity=%s
         WHERE product_id=%s
-    """, (name, desc, category, price, final_image, item_id))
+    """, (name, desc, category, price, final_image, stock_quantity, item_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -563,6 +577,147 @@ def admin_delete_item(item_id):
 
     flash("Product deleted successfully!", "success")
     return redirect('/admin/item-list')
+# ======================================
+# VIEW ALL ORDERS OF A SPECIFIC USER
+# ======================================
+@app.route("/admin/user-orders/<int:user_id>")
+def admin_user_orders(user_id):
+    if "admin_id" not in session:
+        flash("Please login as Admin!", "danger")
+        return redirect("/admin-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT o.*, u.name, u.email
+        FROM orders o
+        INNER JOIN users u ON o.user_id = u.user_id
+        WHERE o.user_id=%s
+        ORDER BY o.created_at DESC
+    """, (user_id,))
+    orders = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("admin/admin_user_orders.html", orders=orders)
+
+#------------ADMIN ORDERS----------------------------
+@app.route("/admin/orders")
+def admin_orders():
+    if "admin_id" not in session:
+        flash("Please login as admin!", "danger")
+        return redirect("/admin-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT o.*, u.name AS user_name, u.email AS email,
+               (SELECT SUM(quantity) FROM order_items WHERE order_id=o.order_id) AS total_items
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.user_id
+        ORDER BY o.order_id DESC
+    """)
+    orders = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("admin/admin_orders.html", orders=orders)
+
+# ============================
+# VIEW USERS WHO PLACED ORDERS
+# ============================
+@app.route("/admin/users")
+def admin_users():
+    if "admin_id" not in session:
+        flash("Please login as Admin!", "danger")
+        return redirect("/admin-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            u.user_id,
+            u.name,
+            u.email,
+            COUNT(o.order_id) AS total_orders,
+            SUM(o.amount) AS total_spent
+        FROM users u
+        LEFT JOIN orders o ON u.user_id = o.user_id
+        GROUP BY u.user_id
+        ORDER BY total_orders DESC;
+    """)
+
+    users = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template("admin/admin_users.html", users=users)
+
+
+
+# ----------------- ADMIN MANAGE STOCK -----------------------
+@app.route('/admin/manage-stock')
+def admin_manage_stock():
+    if 'admin_id' not in session:
+        flash("Login required!", "danger")
+        return redirect('/admin-login')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM products ORDER BY product_id DESC")
+    products = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template("admin/manage_stock.html", products=products)
+
+#-----------------uPDATE sTOCK --------------------------------
+@app.route('/admin/update-stock/<int:pid>', methods=['POST'])
+def admin_update_stock(pid):
+    qty = request.form.get("quantity")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE products SET stock=%s WHERE product_id=%s",
+                   (qty, pid))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    flash("Stock updated successfully!", "success")
+    return redirect('/admin/manage-stock')
+
+#------------------------ORDER STATUS---------------------------------
+@app.route("/admin/update-order-status/<int:order_id>", methods=["POST"])
+def admin_update_order_status(order_id):
+
+    if "admin_id" not in session:
+        flash("Please login as admin!", "danger")
+        return redirect("/admin-login")
+
+    new_status = request.form.get("status")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE orders SET status=%s WHERE order_id=%s",
+                   (new_status, order_id))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    flash("Order status updated successfully!", "success")
+    return redirect("/admin/orders")
+
+
 # ============================================================
 # ======================= USER MODULE ========================
 # ============================================================
@@ -669,10 +824,14 @@ def user_login():
     session['user_name'] = user['name']
     session['user_email'] = user['email']
 
+    session.permanent = True          # ✅ NEW (session lifetime = 1 year)
+
     session['cart_count'] = sum(item['quantity'] for item in session.get('cart', {}).values())
 
     flash("User login successful!", "success")
-    return redirect('/user-dashboard')
+    return redirect('/user/products')   # Already updated to go to products
+
+
 
 
 # ----------------- USER DASHBOARD ---------------------------
@@ -749,13 +908,9 @@ def user_view_product(pid):
         return redirect('/user/products')
 
     return render_template("user/user_view_product.html", product=product)
-
-
 # ============================================================
 # CART SYSTEM (DAY 11)
 # ============================================================
-
-# Add to Cart
 @app.route('/user/add-to-cart/<int:pid>')
 def user_add_to_cart(pid):
     if 'user_id' not in session:
@@ -771,9 +926,18 @@ def user_add_to_cart(pid):
     if not product:
         return jsonify({"status": "error", "message": "Product not found"})
 
+    # --- ❗ Prevent adding when stock is zero ---
+    if product["stock"] <= 0:
+        return jsonify({"status": "error", "message": "Out of Stock"})
+
     cart = session.get("cart", {})
     pid_str = str(pid)
 
+    # If quantity in cart reaches available stock
+    if pid_str in cart and cart[pid_str]["quantity"] >= product["stock"]:
+        return jsonify({"status": "error", "message": "Stock limit reached"})
+
+    # Add to cart normally
     if pid_str in cart:
         cart[pid_str]["quantity"] += 1
     else:
@@ -788,6 +952,7 @@ def user_add_to_cart(pid):
     session["cart_count"] = sum(item["quantity"] for item in cart.values())
 
     return jsonify({"status": "success", "cart_count": session["cart_count"]})
+
 
 
 # View Cart
@@ -809,11 +974,22 @@ def cart_inc(pid):
     pid = str(pid)
 
     if pid in cart:
-        cart[pid]["quantity"] += 1
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT stock FROM products WHERE product_id=%s", (pid,))
+        stock = cursor.fetchone()["stock"]
+        cursor.close()
+        conn.close()
+
+        if cart[pid]["quantity"] < stock:
+            cart[pid]["quantity"] += 1
+        else:
+            flash("Reached available stock limit!", "warning")
 
     session["cart"] = cart
     session["cart_count"] = sum(i["quantity"] for i in cart.values())
     return redirect('/user/cart')
+
 
 
 @app.route('/user/cart/decrease/<pid>')
@@ -859,17 +1035,15 @@ def add_address():
     state = request.form.get("state")
     city = request.form.get("city")
     house = request.form.get("house")
-    area = request.form.get("area")   # ✅ Correct field
+    area = request.form.get("area")
     address_type = request.form.get("address_type")
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("""
         INSERT INTO addresses (user_id, name, phone, pincode, state, city, house, area, address_type)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (session["user_id"], name, phone, pincode, state, city, house, area, address_type))
-
     conn.commit()
     cursor.close()
     conn.close()
@@ -877,10 +1051,7 @@ def add_address():
     flash("Address added successfully!", "success")
     return redirect("/user/select-address")
 
-
-
-
-# -----------select Adress--------------------------------------------------------
+#---------------------SELECT ADDRESS------------------------------
 
 @app.route("/user/select-address", methods=["GET", "POST"])
 def select_address():
@@ -888,6 +1059,7 @@ def select_address():
         flash("Please login first!", "danger")
         return redirect("/user-login")
 
+    # GET: show list
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM addresses WHERE user_id=%s", (session["user_id"],))
@@ -895,22 +1067,73 @@ def select_address():
     cursor.close()
     conn.close()
 
-    # POST → User selected an address
     if request.method == "POST":
         address_id = request.form.get("address_id")
 
         if not address_id:
-            flash("Please select an address!", "danger")
+            flash("Select an address!", "danger")
             return redirect("/user/select-address")
 
-        # Save selected address in session
         session["selected_address_id"] = address_id
-
-        # Now go to Razorpay payment screen
         return redirect("/user/pay")
 
-    # GET → show all saved addresses
     return render_template("user/select_address.html", addresses=addresses)
+
+
+
+# ----------------- CHECKOUT SUMMARY PAGE --------------------
+@app.route('/user/checkout')
+def user_checkout():
+    if "user_id" not in session:
+        flash("Please login first!", "danger")
+        return redirect("/user-login")
+
+    cart = session.get("cart", {})
+    if not cart:
+        flash("Your cart is empty!", "warning")
+        return redirect("/user/cart")
+
+    grand_total = sum(item["price"] * item["quantity"] for item in cart.values())
+
+    return render_template(
+        "user/user_checkout.html",
+        cart=cart,
+        grand_total=grand_total
+    )
+   
+ #-----------------BUY NOW -----------------------------------------------------
+@app.route("/user/buy-now/<int:pid>")
+def buy_now(pid):
+
+    if "user_id" not in session:
+        flash("Please login!", "danger")
+        return redirect("/user-login")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM products WHERE product_id=%s", (pid,))
+    product = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not product:
+        flash("Product not found!", "danger")
+        return redirect("/user/products")
+
+    # Create cart with single product
+    session["cart"] = {
+        str(pid): {
+            "name": product["name"],
+            "price": float(product["price"]),
+            "image": product["image"],
+            "quantity": 1
+        }
+    }
+
+    session["cart_count"] = 1
+
+    return redirect("/user/select-address")
+
 
 # ============================================================
 # PAYMENT PAGE ENTRY AFTER ADDRESS SELECTION
@@ -921,23 +1144,19 @@ def user_pay():
         flash("Please login first!", "danger")
         return redirect("/user-login")
 
-    # Check if address is selected
     address_id = session.get("selected_address_id")
     if not address_id:
         flash("Please select a delivery address!", "warning")
         return redirect("/user/select-address")
 
-    # Load cart
     cart = session.get("cart", {})
     if not cart:
         flash("Your cart is empty!", "warning")
         return redirect("/user/cart")
 
-    # Calculate total
     total = sum(item["price"] * item["quantity"] for item in cart.values())
     razorpay_amount = int(total * 100)
 
-    # Create Razorpay order
     order = razorpay_client.order.create({
         "amount": razorpay_amount,
         "currency": "INR",
@@ -953,133 +1172,151 @@ def user_pay():
         key_id=config.RAZORPAY_KEY_ID,
         order_id=order["id"]
     )
+#-----------USER TRACK-------------------------------
+@app.route('/user/track/<int:order_id>')
+def user_track(order_id):
 
+    if "user_id" not in session:
+        flash("Please login!", "danger")
+        return redirect("/user-login")
 
-# ============================================================
-# CHECKOUT → RAZORPAY ORDER CREATION
-# ============================================================
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-@app.route('/user/checkout/<int:address_id>')
-def checkout(address_id):
-    if 'user_id' not in session:
-        flash("Login required!", "danger")
-        return redirect('/user-login')
+    cursor.execute("""
+        SELECT * FROM orders 
+        WHERE order_id=%s AND user_id=%s
+    """, (order_id, session["user_id"]))
+    order = cursor.fetchone()
 
-    session['selected_address'] = address_id
+    cursor.close()
+    conn.close()
 
-    cart = session.get("cart", {})
-    if not cart:
-        flash("Your cart is empty!", "danger")
-        return redirect('/user/cart')
+    if not order:
+        flash("Order not found!", "danger")
+        return redirect("/user/my-orders")
 
-    total = sum(item["price"] * item["quantity"] for item in cart.values())
-    razorpay_amount = int(total * 100)  # convert to paise
-
-    # Create Razorpay order
-    rzp_order = razorpay_client.order.create({
-        "amount": razorpay_amount,
-        "currency": "INR",
-        "payment_capture": "1"
-    })
-
-    session['razorpay_order_id'] = rzp_order['id']
-
-    return render_template(
-        "user/payment.html",
-        amount=total,
-        razorpay_amount=razorpay_amount,
-        key_id=config.RAZORPAY_KEY_ID,
-        order_id=rzp_order['id']
-    )
-# ============================================================
-# ============ DAY-13: VERIFY PAYMENT & STORE ORDER ==========
-# ============================================================
+    return render_template("user/track_order.html", order=order)
 
 # ============================================================
-# VERIFY PAYMENT + STORE ORDER (FINAL WORKING VERSION)
+# VERIFY PAYMENT + STORE ORDER
+# ============================================================
+# ============================================================
+# VERIFY PAYMENT + STORE ORDER + REDUCE STOCK
 # ============================================================
 @app.route('/verify-payment', methods=['POST'])
 def verify_payment():
     if 'user_id' not in session:
-        flash("Please login to complete the payment.", "danger")
+        flash("Please login to complete payment.", "danger")
         return redirect('/user-login')
 
-    # Values from Razorpay script
+    # Razorpay Values
     razorpay_payment_id = request.form.get('razorpay_payment_id')
-    razorpay_order_id = request.form.get('razorpay_order_id')
-    razorpay_signature = request.form.get('razorpay_signature')
+    razorpay_order_id   = request.form.get('razorpay_order_id')
+    razorpay_signature  = request.form.get('razorpay_signature')
 
-    # Validate required values
+    # Validate
     if not (razorpay_payment_id and razorpay_order_id and razorpay_signature):
         flash("Payment verification failed!", "danger")
         return redirect('/user/cart')
 
-    # Verify using Razorpay SDK
+    # Verify signature
     try:
         razorpay_client.utility.verify_payment_signature({
             "razorpay_order_id": razorpay_order_id,
             "razorpay_payment_id": razorpay_payment_id,
             "razorpay_signature": razorpay_signature
         })
-
     except Exception as e:
-        print("Verification Error:", e)
         flash("Payment verification failed!", "danger")
         return redirect('/user/cart')
 
-    # Get user & cart details
+    # Load user info
     user_id = session['user_id']
-    cart = session.get('cart', {})
+    cart    = session.get('cart', {})
 
     if not cart:
         flash("Cart empty — cannot place order.", "danger")
         return redirect('/user/products')
 
-    # Compute total
-    total_amount = sum(item['price'] * item['quantity'] for item in cart.values())
-
-    # Get selected delivery address
+    # Delivery Address
     address_id = session.get("selected_address_id")
-
     if not address_id:
-        flash("Delivery address missing!", "danger")
+        flash("Select a delivery address!", "danger")
         return redirect("/user/select-address")
 
+    # Calculate total
+    total_amount = sum(item['price'] * item['quantity'] for item in cart.values())
+
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
     try:
-        # Insert order (WITH address_id)
+        # -------------------------------
+        # 1️⃣ Pre-Check Stock for All Items
+        # -------------------------------
+        for pid_str, item in cart.items():
+
+            pid = int(pid_str)
+            qty = item["quantity"]
+
+            cursor.execute("SELECT stock FROM products WHERE product_id=%s", (pid,))
+            stock = cursor.fetchone()["stock"]
+
+            if stock < qty:
+                conn.rollback()
+                flash(f"Only {stock} left for {item['name']}. Update your cart.", "danger")
+                return redirect('/user/cart')
+
+        # -------------------------------
+        # 2️⃣ Insert ORDER
+        # -------------------------------
         cursor.execute("""
-            INSERT INTO orders (user_id, address_id, razorpay_order_id, razorpay_payment_id, amount, payment_status)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO orders (user_id, address_id, razorpay_order_id, razorpay_payment_id, amount, status, payment_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             user_id,
             address_id,
             razorpay_order_id,
             razorpay_payment_id,
             total_amount,
-            "paid"
+            "Placed",
+            "Paid"
         ))
 
-        order_db_id = cursor.lastrowid  # newly created order ID
+        order_db_id = cursor.lastrowid
 
-        # Insert order items
+        # -------------------------------
+        # 3️⃣ Insert ORDER ITEMS + Deduct Stock
+        # -------------------------------
         for pid_str, item in cart.items():
+
+            pid = int(pid_str)
+            qty = item["quantity"]
+
             cursor.execute("""
                 INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
                 VALUES (%s, %s, %s, %s, %s)
             """, (
                 order_db_id,
-                int(pid_str),
-                item["name"],
-                item["quantity"],
-                item["price"]
+                pid,
+                item['name'],
+                qty,
+                item['price']
             ))
+
+            # Reduce stock but never < 0
+            cursor.execute("""
+                UPDATE products 
+                SET stock = GREATEST(stock - %s, 0)
+                WHERE product_id=%s
+            """, (qty, pid))
 
         conn.commit()
 
-        # Clear cart
+        # -------------------------------
+        # 4️⃣ CLEAR CART
+        # -------------------------------
         session.pop("cart", None)
         session["cart_count"] = 0
 
@@ -1098,9 +1335,8 @@ def verify_payment():
 
 
 # ============================================================
-# ORDER SUCCESS + MY ORDERS + TRACK ORDER
+# ORDER SUCCESS + MY ORDERS
 # ============================================================
-
 @app.route('/user/order-success/<int:order_db_id>')
 def order_success(order_db_id):
     if 'user_id' not in session:
@@ -1154,26 +1390,9 @@ def my_orders():
     return render_template("user/my_orders.html", orders=orders)
 
 
-
-
 # ============================================================
-# ============ DAY-14: INVOICE PDF GENERATION =================
+# INVOICE DOWNLOAD (WITH ADDRESS)
 # ============================================================
-
-from io import BytesIO
-from xhtml2pdf import pisa
-
-def generate_pdf(html):
-    """
-    Convert HTML string to PDF (BytesIO).
-    """
-    pdf = BytesIO()
-    pisa_status = pisa.CreatePDF(html, dest=pdf)
-    if pisa_status.err:
-        return None
-    pdf.seek(0)
-    return pdf
-
 @app.route("/user/download-invoice/<int:order_id>")
 def download_invoice(order_id):
     if 'user_id' not in session:
@@ -1183,11 +1402,16 @@ def download_invoice(order_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # JOIN orders + address
     cursor.execute("""
-        SELECT o.*, a.name AS a_name, a.phone AS a_phone, a.pincode AS a_pincode,
-               a.state AS a_state, a.city AS a_city, a.house AS a_house,
-               a.area AS a_area, a.address_type AS a_type
+        SELECT o.*, 
+               a.name   AS a_name,
+               a.phone  AS a_phone,
+               a.pincode AS a_pincode,
+               a.state  AS a_state,
+               a.city   AS a_city,
+               a.house  AS a_house,
+               a.area   AS a_area,
+               a.address_type AS a_type
         FROM orders o
         LEFT JOIN addresses a ON o.address_id = a.address_id
         WHERE o.order_id=%s AND o.user_id=%s
@@ -1204,7 +1428,6 @@ def download_invoice(order_id):
         flash("Order not found.", "danger")
         return redirect("/user/my-orders")
 
-    # Generate invoice PDF
     html = render_template("user/invoice.html", order=order, items=items)
 
     pdf = generate_pdf(html)
@@ -1218,22 +1441,22 @@ def download_invoice(order_id):
     return response
 
 
+# ============================================================
+# USER TRACK ORDER
+# ============================================================
 @app.route("/user/track/<int:order_id>")
 def user_track_order(order_id):
-
     if "user_id" not in session:
         flash("Please login!", "danger")
         return redirect("/user-login")
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
     cursor.execute("""
         SELECT * FROM orders 
         WHERE order_id=%s AND user_id=%s
     """, (order_id, session['user_id']))
     order = cursor.fetchone()
-
     cursor.close()
     conn.close()
 
@@ -1242,26 +1465,6 @@ def user_track_order(order_id):
         return redirect("/user/my-orders")
 
     return render_template("user/track_order.html", order=order)
-@app.route('/user/checkout')
-def user_checkout():
-    if "user_id" not in session:
-        flash("Please login first!", "danger")
-        return redirect("/user-login")
-
-    cart = session.get("cart", {})
-    if not cart:
-        flash("Your cart is empty!", "warning")
-        return redirect("/user/cart")
-
-    grand_total = sum(item["price"] * item["quantity"] for item in cart.values())
-
-    return render_template(
-        "user/user_checkout.html",
-        cart=cart,
-        grand_total=grand_total
-    )
-
-
 # ============================================================
 # RUN SERVER
 # ============================================================

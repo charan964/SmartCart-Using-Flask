@@ -1,16 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2 class="page-title">Update Product</h2>
+<h2 class="page-title text-center mb-4">Update Product</h2>
 
-<div class="row justify-content-center">
+<div class="row justify-content-center update-product-wrapper">
     <div class="col-md-6">
-        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
 
-            <div class="mb-3 text-center">
-                <img src="/static/uploads/product_images/{{ product.image }}" width="120" height="120"
-                     style="object-fit:cover; border-radius:10px;">
-            </div>
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
 
             <div class="mb-3">
                 <label>Product Name</label>
@@ -24,23 +20,37 @@
 
             <div class="mb-3">
                 <label>Category</label>
-                <input type="text" name="category" value="{{ product.category }}" class="form-control" required>
+                <input type="text" name="category" class="form-control" value="{{ product.category }}" required>
             </div>
 
             <div class="mb-3">
                 <label>Price (₹)</label>
-                <input type="number" step="0.01" name="price" value="{{ product.price }}" class="form-control" required>
+                <input type="number" step="0.01" name="price" class="form-control" value="{{ product.price }}" required>
             </div>
 
             <div class="mb-3">
-                <label>Change Image (optional)</label>
-                <input type="file" name="image" class="form-control" accept="image/*">
+                <label>Stock Quantity</label>
+                <input type="number" name="stock" class="form-control" value="{{ product.stock }}" min="0">
             </div>
 
-            <button class="btn btn-primary w-100">Save Changes</button>
+            <div class="mb-3">
+                <label>Current Product Image</label><br>
+                <img src="/static/uploads/product_images/{{ product.image }}" width="120" class="rounded mb-2">
+                <input type="file" name="image" class="form-control mt-2" accept="image/*">
+            </div>
+
+            <button class="btn btn-primary w-100">Update Product</button>
 
         </form>
+
     </div>
 </div>
+
+<style>
+.update-product-wrapper {
+    margin-bottom: 140px; /* Fix overlap */
+}
+.page-title { text-align: center; }
+</style>
 
 {% endblock %}

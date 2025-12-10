@@ -1,49 +1,139 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="container py-4">
+<div class="container product-view-wrapper">
 
     <div class="row">
+
+        <!-- PRODUCT IMAGE -->
         <div class="col-md-5 text-center">
-            <img src="/static/uploads/product_images/{{ product.image }}" 
-                 class="img-fluid rounded shadow">
+            <img src="/static/uploads/product_images/{{ product.image }}"
+                 class="product-image shadow-sm">
         </div>
 
+        <!-- PRODUCT DETAILS -->
         <div class="col-md-7">
-            
+
             <h2 class="fw-bold">{{ product.name }}</h2>
 
-            <h4 class="text-primary fw-bold mt-3">₹ {{ product.price }}</h4>
+            <!-- AUTO RANDOM PRODUCT RATING -->
+            {% set rating = (range(3, 6) | random) %}
+            <p class="rating text-warning fs-5">
+                {% for i in range(rating) %} ★ {% endfor %}
+                <small class="text-muted">({{ rating }}.0)</small>
+            </p>
+
+            <h3 class="text-success fw-bold">₹{{ product.price }}</h3>
 
             <p class="mt-3">{{ product.description }}</p>
 
-            <button class="btn btn-warning btn-lg mt-3" 
-                    onclick="addToCart({{ product.product_id }})">
-                <i class="fa fa-cart-plus"></i> Add to Cart
-            </button>
+            <!-- STOCK STATUS -->
+            {% if product.stock > 0 %}
+                <p class="text-success fw-semibold">
+                    In Stock: {{ product.stock }}
+                </p>
+            {% else %}
+                <p class="text-danger fw-semibold">
+                    Out of Stock
+                </p>
+            {% endif %}
 
-            <a href="/user/cart" class="btn btn-success btn-lg mt-3 ms-2">
-                <i class="fa fa-bolt"></i> Buy Now
-            </a>
+            <hr>
+
+            <!-- BUTTONS -->
+            <div class="d-flex gap-3 mt-3">
+
+                <!-- BUY NOW (Goes directly to address selection) -->
+                {% if product.stock > 0 %}
+                <a href="/user/buy-now/{{ product.product_id }}" class="btn btn-warning btn-lg w-50">
+                    <i class="fa fa-bolt"></i> Buy Now
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-lg w-50" disabled>
+                    <i class="fa fa-ban"></i> Out of Stock
+                </button>
+                {% endif %}
+
+                <!-- ADD TO CART -->
+                {% if product.stock > 0 %}
+                <button class="btn btn-primary btn-lg w-50 add-to-cart"
+                        data-id="{{ product.product_id }}">
+                    <i class="fa fa-cart-plus"></i> Add to Cart
+                </button>
+                {% else %}
+                <button class="btn btn-secondary btn-lg w-50" disabled>
+                    <i class="fa fa-cart-arrow-down"></i> Cannot Add
+                </button>
+                {% endif %}
+            </div>
+
         </div>
     </div>
 
 </div>
 
+
+<!-- ADD TO CART SCRIPT -->
 <script>
-function addToCart(pid) {
-    fetch(`/user/add-to-cart/${pid}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                document.getElementById("cart-count").textContent = data.cart_count;
-                alert("Item added to cart!");
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(err => console.log(err));
-}
+document.querySelectorAll('.add-to-cart').forEach(btn => {
+    btn.addEventListener('click', function () {
+        let pid = this.getAttribute("data-id");
+
+        fetch(`/user/add-to-cart/${pid}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.cart_count !== undefined) {
+                    document.getElementById("cart-count").innerText = data.cart_count;
+                }
+                alert(data.message || "Product added to cart!");
+            });
+    });
+});
 </script>
+
+
+<style>
+.product-view-wrapper {
+    margin-bottom: 140px; /* Prevent footer overlap */
+}
+
+/* PRODUCT IMAGE */
+.product-image {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* RATING */
+.rating {
+    margin-top: -5px;
+}
+
+/* BUTTON HOVER */
+.btn:hover {
+    transform: scale(1.03);
+    transition: 0.2s;
+}
+
+/* MOBILE RESPONSIVE */
+@media(max-width: 768px) {
+    .product-image {
+        height: 280px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    h3 {
+        font-size: 22px;
+    }
+
+    .d-flex {
+        flex-direction: column;
+    }
+}
+</style>
 
 {% endblock %}

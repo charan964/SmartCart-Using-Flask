@@ -1,40 +1,86 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2 class="page-title">Admin Dashboard</h2>
+<h2 class="fw-bold mb-4 text-center">Admin Dashboard</h2>
 
-<div class="dashboard-grid">
+<div class="row admin-dashboard-wrapper">
 
-    <a href="/admin/add-item" class="text-decoration-none">
-        <div class="dashboard-card blue">
-            <i class="fa fa-plus-circle"></i>
-            <div>
-                <h5>Add Product</h5>
-                <p class="mb-0">Create new product entries</p>
+    <!-- Add Product -->
+    <div class="col-md-4 mb-3">
+        <a href="/admin/add-item" class="card dashboard-card shadow text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fa fa-plus fa-3x text-primary mb-3"></i>
+                <h5 class="fw-bold">Add Product</h5>
+                <p class="text-muted">Add new items to the catalog</p>
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
 
-    <a href="/admin/item-list" class="text-decoration-none">
-        <div class="dashboard-card orange">
-            <i class="fa fa-boxes-stacked"></i>
-            <div>
-                <h5>Manage Products</h5>
-                <p class="mb-0">View / Update / Delete</p>
+    <!-- Manage Products -->
+    <div class="col-md-4 mb-3">
+        <a href="/admin/item-list" class="card dashboard-card shadow text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fa fa-list fa-3x text-success mb-3"></i>
+                <h5 class="fw-bold">Manage Products</h5>
+                <p class="text-muted">Update, delete or view products</p>
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
 
-    <a href="/admin/profile" class="text-decoration-none">
-        <div class="dashboard-card green">
-            <i class="fa fa-user-gear"></i>
-            <div>
-                <h5>Admin Profile</h5>
-                <p class="mb-0">Update account details</p>
+    <!-- Manage Stock -->
+    <div class="col-md-4 mb-3">
+        <a href="/admin/manage-stock" class="card dashboard-card shadow text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fa fa-boxes-stacked fa-3x text-warning mb-3"></i>
+                <h5 class="fw-bold">Manage Stock</h5>
+                <p class="text-muted">Update available product quantities</p>
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
+
+    <!-- Manage Orders -->
+    <div class="col-md-6 mb-3">
+        <a href="/admin/orders" class="card dashboard-card shadow text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fa fa-truck-fast fa-3x text-info mb-3"></i>
+                <h5 class="fw-bold">Manage Orders</h5>
+                <p class="text-muted">Update delivery status & track orders</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- View Customers -->
+    <div class="col-md-6 mb-3">
+        <a href="/admin/users" class="card dashboard-card shadow text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fa fa-users fa-3x text-danger mb-3"></i>
+                <h5 class="fw-bold">View Customers</h5>
+                <p class="text-muted">See who placed orders and order history</p>
+            </div>
+        </a>
+    </div>
 
 </div>
+
+<style>
+.dashboard-card {
+    border-radius: 12px;
+    transition: 0.3s ease;
+    cursor: pointer;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.admin-dashboard-wrapper {
+    margin-bottom: 140px !important; /* Fix footer overlap */
+}
+
+.card-body h5 {
+    margin-bottom: 6px;
+}
+</style>
 
 {% endblock %}

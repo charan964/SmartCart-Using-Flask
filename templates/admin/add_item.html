@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2 class="page-title">Add New Product</h2>
+<h2 class="page-title text-center mb-4">Add New Product</h2>
 
 <div class="row justify-content-center add-product-wrapper">
     <div class="col-md-6">
@@ -28,6 +28,11 @@
             </div>
 
             <div class="mb-3">
+                <label>Stock Quantity</label>
+                <input type="number" name="stock" class="form-control" required min="0">
+            </div>
+
+            <div class="mb-3">
                 <label>Product Image</label>
                 <input type="file" name="image" class="form-control" accept="image/*" required>
             </div>
@@ -39,15 +44,10 @@
 </div>
 
 <style>
-/* Prevent footer overlap */
 .add-product-wrapper {
-    margin-bottom: 140px;   /* ⭐ same fix applied here */
+    margin-bottom: 140px;   /* Prevent footer overlap */
 }
-
-.page-title {
-    text-align: center;
-    margin-bottom: 20px;
-}
+.page-title { text-align: center; }
 </style>
 
 {% endblock %}

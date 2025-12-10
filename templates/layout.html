@@ -14,6 +14,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
+
+        /* ---------- DARK MODE VARIABLES ---------- */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --card-bg: #ffffff;
+            --card-border: #dddddd;
+            --nav-bg: #0d6efd;
+            --footer-bg: #0d6efd;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #f5f5f5;
+            --card-bg: #1c1c1c;
+            --card-border: #333;
+            --nav-bg: #1a1a1a;
+            --footer-bg: #1a1a1a;
+        }
+
+        body {
+            background: var(--bg-color) !important;
+            color: var(--text-color) !important;
+            padding-bottom: 120px !important;
+        }
+
+        .card, .product-card {
+            background: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--card-border) !important;
+        }
+
+        .navbar {
+            background: var(--nav-bg) !important;
+        }
+
+        .footer {
+            background: var(--footer-bg) !important;
+        }
+
+        .theme-toggle-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+
         /* ---------- CART BADGE ---------- */
         .cart-badge {
             background: #ff3f3f;
@@ -33,9 +83,8 @@
             display: inline-block;
         }
 
-        /* ---------- FIXED FOOTER (Improved no-overlap) ---------- */
+        /* ---------- FOOTER (same as your code) ---------- */
         .footer {
-            background: #111;
             color: white;
             padding: 12px;
             text-align: center;
@@ -46,11 +95,6 @@
             z-index: 999;
         }
 
-        /* Add large buffer so content never hides under footer */
-        body {
-            padding-bottom: 120px !important;
-        }
-
         .content {
             margin-bottom: 140px !important;
         }
@@ -59,11 +103,14 @@
 
 <body>
 
-<!-- ======================= NAVBAR (Flipkart style) ======================= -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3 shadow-sm sticky-top">
+<!-- ======================= NAVBAR ======================= -->
+<nav class="navbar navbar-expand-lg navbar-dark px-3 shadow-sm sticky-top">
     <a class="navbar-brand fw-bold" href="/">
         <i class="fa-solid fa-cart-shopping me-1"></i> SmartCart
     </a>
+
+    <!-- DARK MODE BUTTON -->
+    <button id="themeToggle" class="theme-toggle-btn">🌙</button>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <span class="navbar-toggler-icon"></span>
@@ -100,7 +147,6 @@
                     </a>
                 </li>
 
-                <!-- CART ICON + BADGE -->
                 <li class="nav-item">
                     <a class="nav-link position-relative" href="/user/cart">
                         <span class="cart-icon-box">
@@ -147,21 +193,42 @@
     {% endwith %}
 </div>
 
-
 <!-- ======================= MAIN CONTENT ======================= -->
 <div class="content container my-3">
     {% block content %}{% endblock %}
 </div>
 
-
-<!-- ======================= FIXED FOOTER ======================= -->
+<!-- ======================= FOOTER ======================= -->
 <footer class="footer">
     © 2025 SmartCart — All Rights Reserved
 </footer>
 
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- =============== DARK MODE SCRIPT (Only added) ================= -->
+<script>
+const body = document.body;
+const toggle = document.getElementById("themeToggle");
+
+// Load saved preference
+if (localStorage.getItem("theme") === "dark") {
+    body.classList.add("dark-mode");
+    toggle.textContent = "☀️";
+}
+
+toggle.addEventListener("click", () => {
+    body.classList.toggle("dark-mode");
+
+    if (body.classList.contains("dark-mode")) {
+        localStorage.setItem("theme", "dark");
+        toggle.textContent = "☀️";
+    } else {
+        localStorage.setItem("theme", "light");
+        toggle.textContent = "🌙";
+    }
+});
+</script>
 
 </body>
 </html>

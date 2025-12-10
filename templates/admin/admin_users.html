@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h3 class="fw-bold mb-4 text-center">Customers & Order Summary</h3>
+
+<div class="table-responsive mb-5">
+<table class="table table-bordered table-hover shadow-sm text-center align-middle">
+
+    <thead class="table-primary">
+        <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Total Orders</th>
+            <th>Total Spent</th>
+            <th>View Orders</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.user_id }}</td>
+
+            <td>{{ u.name }}</td>
+
+            <td>{{ u.email }}</td>
+
+            <td>
+                <span class="badge bg-info">{{ u.total_orders }}</span>
+            </td>
+
+            <td>
+                ₹{{ u.total_spent if u.total_spent else 0 }}
+            </td>
+
+            <td>
+                <a href="/admin/user-orders/{{ u.user_id }}" 
+                   class="btn btn-sm btn-primary">
+                    View Orders
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+</div>
+
+{% endblock %}

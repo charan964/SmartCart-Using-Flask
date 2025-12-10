@@ -1,61 +1,158 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h3 class="mb-4 fw-bold text-center">All Products</h3>
+<!-- ========================= SEARCH + FILTER BAR (TOP) ========================= -->
+<div class="search-filter-container mt-3 mb-3 d-flex gap-2">
 
-<!-- Search & Filter -->
-<form method="GET" class="row mb-4">
-    <div class="col-md-4">
-        <input type="text" class="form-control" name="search" placeholder="Search product..."
-               value="{{ request.args.get('search','') }}">
-    </div>
+    <form action="/user/products" method="get" class="d-flex w-100">
 
-    <div class="col-md-4">
-        <select class="form-control" name="category">
-            <option value="">All Categories</option>
+        <!-- SEARCH INPUT -->
+        <input 
+            type="text" 
+            name="search" 
+            class="form-control"
+            placeholder="Search for products..."
+            value="{{ request.args.get('search', '') }}"
+            style="height: 45px; border-radius: 10px;"
+        >
 
-            {% for c in categories %}
-                <option value="{{ c.category }}"
-                    {% if request.args.get('category') == c.category %} selected {% endif %}>
-                    {{ c.category }}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <button class="btn btn-primary w-100">
-            <i class="fa fa-search"></i> Search
+        <!-- SEARCH BUTTON -->
+        <button class="btn btn-primary ms-2" style="height: 45px; border-radius: 10px;">
+            <i class="fa fa-search"></i>
         </button>
-    </div>
-</form>
 
-<!-- Product Grid -->
+        <!-- FILTER DROPDOWN -->
+        <select name="filter" class="form-select ms-2"
+                style="width: 180px; height: 45px; border-radius: 10px;"
+                onchange="this.form.submit()">
+
+            <option value="">Filter</option>
+
+            <option value="low" {% if request.args.get('filter')=='low' %}selected{% endif %}>
+                Price: Low → High
+            </option>
+
+            <option value="high" {% if request.args.get('filter')=='high' %}selected{% endif %}>
+                Price: High → Low
+            </option>
+
+            <option value="new" {% if request.args.get('filter')=='new' %}selected{% endif %}>
+                Newest First
+            </option>
+
+        </select>
+
+    </form>
+
+</div>
+
+
+<!-- ========================= MAIN BANNER SLIDER ========================= -->
+<div id="mainBanner" class="banner-slider">
+
+    <div class="slides">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30" class="banner-img">
+        <img src="https://images.unsplash.com/photo-1503602642458-232111445657" class="banner-img">
+    </div>
+
+    <button class="banner-btn left" onclick="moveSlide(-1)">&#10094;</button>
+    <button class="banner-btn right" onclick="moveSlide(1)">&#10095;</button>
+
+</div>
+
+
+<!-- ========================= CATEGORY CAROUSEL ========================= -->
+<h5 class="fw-bold mt-4 mb-2">Categories</h5>
+
+<div class="category-carousel">
+
+    {% for c in categories %}
+    {% set cat = c.category.lower() %}
+
+    {% if cat == "automobiles" or cat == "bike" %}
+        {% set img = "https://images.unsplash.com/photo-1503376780353-7e6692767b70" %}
+
+    {% elif cat == "fruits" %}
+        {% set img = "https://images.unsplash.com/photo-1574226516831-e1dff420e12e" %}
+
+    {% elif cat == "electronics" %}
+        {% set img = "https://images.unsplash.com/photo-1518770660439-4636190af475" %}
+
+    {% elif cat == "shoe" %}
+        {% set img = "https://images.unsplash.com/photo-1519741497674-611481863552" %}
+
+    {% elif cat == "clothing" %}
+        {% set img = "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f" %}
+
+    {% elif cat == "mobiles" %}
+        {% set img = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9" %}
+
+    {% else %}
+        {% set img = "https://images.unsplash.com/photo-1585386959984-a4155223f9a5" %}
+    {% endif %}
+
+    <a href="/user/products?category={{ c.category }}"
+       class="category-item {% if request.args.get('category') == c.category %}active{% endif %}">
+        <img src="{{ img }}" class="cat-img">
+        <span>{{ c.category }}</span>
+    </a>
+
+    {% endfor %}
+
+</div>
+
+
+
+
+
+<!-- ========================= PRODUCTS GRID ========================= -->
+<h4 class="fw-bold mt-4 mb-3">All Products</h4>
+
 <div class="row user-products-wrapper">
 
     {% for p in products %}
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm product-card">
+    <div class="col-6 col-md-3 mb-4">
+        <div class="card product-card shadow-sm">
 
-            <img src="/static/uploads/product_images/{{ p.image }}"
-                 class="card-img-top"
-                 style="height:200px; object-fit:cover;">
+            <img src="/static/uploads/product_images/{{ p.image }}" class="card-img-top product-img">
 
             <div class="card-body text-center">
-                <h5 class="fw-semibold">{{ p.name }}</h5>
-                <p class="text-success fw-bold">₹{{ p.price }}</p>
 
-                <!-- View Product -->
-                <a href="/user/product/{{ p.product_id }}" 
+                <h6 class="fw-semibold product-name">{{ p.name }}</h6>
+
+                <p class="text-success fw-bold mb-1">₹{{ p.price }}</p>
+
+                {% set rating = [3,4,5] | random %}
+                <p class="rating-stars text-warning mb-1">
+                    {% for i in range(rating) %}
+                        <i class="fa fa-star"></i>
+                    {% endfor %}
+                    {% for i in range(5-rating) %}
+                        <i class="fa fa-star text-secondary"></i>
+                    {% endfor %}
+                </p>
+
+                {% if p.stock > 0 %}
+                    <p class="text-success small">In Stock ({{ p.stock }})</p>
+                {% else %}
+                    <p class="text-danger small">Out of Stock</p>
+                {% endif %}
+
+                <a href="/user/product/{{ p.product_id }}"
                    class="btn btn-outline-primary btn-sm w-100 mb-2">
-                    <i class="fa fa-eye"></i> View Details
+                    <i class="fa fa-eye"></i> View
                 </a>
 
-                <!-- Add to Cart -->
+                {% if p.stock > 0 %}
                 <button class="btn btn-primary btn-sm w-100 add-to-cart"
                         data-id="{{ p.product_id }}">
                     <i class="fa fa-cart-plus"></i> Add to Cart
                 </button>
+                {% else %}
+                <button class="btn btn-secondary btn-sm w-100" disabled>
+                    Out of Stock
+                </button>
+                {% endif %}
 
             </div>
         </div>
@@ -64,6 +161,8 @@
 
 </div>
 
+
+<!-- ========================= ADD TO CART AJAX ========================= -->
 <script>
 document.querySelectorAll('.add-to-cart').forEach(btn => {
     btn.addEventListener('click', function () {
@@ -72,18 +171,138 @@ document.querySelectorAll('.add-to-cart').forEach(btn => {
         fetch(`/user/add-to-cart/${pid}`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById("cart-count").innerText = data.cart_count;
-                alert("Product added to cart!");
+                if (data.status === "error") {
+                    alert(data.message);
+                } else {
+                    document.getElementById("cart-count").innerText = data.cart_count;
+                    alert("Product added to cart!");
+                }
             });
     });
 });
 </script>
 
-<style>
-/* Prevent footer overlapping product grid */
-.user-products-wrapper {
-    margin-bottom: 140px;   /* same margin used for admin pages */
+
+<!-- ========================= BANNER SLIDER JS ========================= -->
+<script>
+let index = 0;
+
+function moveSlide(step) {
+    const slider = document.querySelector(".banner-slider .slides");
+    const totalSlides = slider.children.length;
+
+    index = (index + step + totalSlides) % totalSlides;
+
+    slider.style.transform = "translateX(" + (-index * 100) + "vw)";
 }
+
+setInterval(() => moveSlide(1), 4000);
+</script>
+
+
+<!-- ========================= PAGE CSS ========================= -->
+<style>
+
+.search-filter-container input {
+    height: 45px;
+    border-radius: 10px;
+}
+
+.search-filter-container .btn,
+.search-filter-container select {
+    height: 45px;
+    border-radius: 10px;
+}
+
+
+/* Banner */
+.banner-slider {
+    width: 100%;
+    height: 260px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.banner-slider .slides {
+    display: flex;
+    transition: transform 0.7s ease-in-out;
+    width: fit-content;
+}
+
+.banner-img {
+    width: 100vw;
+    height: 260px;
+    object-fit: cover;
+}
+
+.banner-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 14px;
+    border: none;
+    font-size: 26px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.left { left: 10px; }
+.right { right: 10px; }
+
+
+/* Category */
+.category-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding: 10px 0;
+    white-space: nowrap;
+}
+.category-carousel::-webkit-scrollbar { display: none; }
+
+.category-item {
+    text-align: center;
+    padding: 5px;
+    min-width: 80px;
+    text-decoration: none;
+    color: black;
+}
+.category-item.active {
+    border-bottom: 3px solid #007bff;
+}
+
+.cat-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+
+/* Deals */
+.deals-wrapper {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 8px;
+}
+
+.deal-card {
+    min-width: 250px;
+}
+
+.deal-img {
+    width: 100%;
+    height: 140px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
 </style>
 
 {% endblock %}

@@ -1,47 +1,56 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="container mt-4">
+<div class="container mt-4 select-address-wrapper">
 
-    <h3>Select Delivery Address</h3>
+    <h3 class="fw-bold mb-3">Select Delivery Address</h3>
+
+    <!-- ADD NEW ADDRESS BUTTON -->
+    <div class="d-flex justify-content-end mb-3">
+        <a href="/user/add-address" class="btn btn-primary btn-sm">
+            + Add New Address
+        </a>
+    </div>
 
     {% if addresses|length == 0 %}
-
-        <p>No saved addresses.</p>
-        <a href="/user/add-address" class="btn btn-primary">Add New Address</a>
-
-    {% else %}
-
-        <div class="row">
-
-            {% for addr in addresses %}
-            <div class="col-md-6">
-                <div class="card shadow mb-3">
-                    <div class="card-body">
-
-                        <h5>{{ addr.name }} ({{ addr.address_type }})</h5>
-
-                        <p class="mb-1">{{ addr.house }}, {{ addr.area }}</p>
-                        <p class="mb-1">{{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</p>
-                        <p class="mb-1">📞 {{ addr.phone }}</p>
-
-                        <!-- FIXED PART — USE POST FORM -->
-                        <form action="/user/select-address" method="POST">
-                            <input type="hidden" name="address_id" value="{{ addr.address_id }}">
-                            <button type="submit" class="btn btn-primary mt-2">
-                                Deliver to this Address
-                            </button>
-                        </form>
-
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-
-        </div>
-
+        <div class="alert alert-warning">No saved addresses.</div>
     {% endif %}
 
+    <div class="row">
+
+        {% for addr in addresses %}
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+                    <h5>{{ addr.name }} ({{ addr.address_type }})</h5>
+
+                    <p class="m-0">{{ addr.house }}, {{ addr.area }}</p>
+                    <p class="m-0">{{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</p>
+                    <p class="m-0 mt-2"><b>📞 {{ addr.phone }}</b></p>
+
+                    <form method="POST" action="/user/select-address">
+                        <input type="hidden" name="address_id" value="{{ addr.address_id }}">
+
+                        <button class="btn btn-success w-100 mt-3">
+                            Deliver to this Address
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
 </div>
+
+<style>
+.select-address-wrapper {
+    margin-bottom: 140px;
+}
+</style>
 
 {% endblock %}

@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h3 class="fw-bold mb-4">Orders by User</h3>
+
+{% if orders|length == 0 %}
+<div class="alert alert-warning text-center">No orders placed by this user.</div>
+{% else %}
+
+<div class="row">
+    {% for o in orders %}
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm p-3">
+
+            <h5>Order #{{ o.order_id }}</h5>
+            <p><b>Amount:</b> ₹{{ o.amount }}</p>
+            <p><b>Status:</b> <span class="badge bg-info">{{ o.status }}</span></p>
+            <p><b>Date:</b> {{ o.created_at }}</p>
+
+            <a href="/user/order-success/{{ o.order_id }}" 
+               class="btn btn-primary btn-sm">
+                View Details
+            </a>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+
+{% endblock %}
