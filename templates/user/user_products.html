@@ -1,308 +1,212 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<!-- ========================= SEARCH + FILTER BAR (TOP) ========================= -->
-<div class="search-filter-container mt-3 mb-3 d-flex gap-2">
+{% set is_search = request.args.get('search') or request.args.get('category') %}
 
-    <form action="/user/products" method="get" class="d-flex w-100">
+<div class="page-content">
 
-        <!-- SEARCH INPUT -->
-        <input 
-            type="text" 
-            name="search" 
-            class="form-control"
-            placeholder="Search for products..."
-            value="{{ request.args.get('search', '') }}"
-            style="height: 45px; border-radius: 10px;"
-        >
+<!-- ========================= SEARCH + CATEGORY FILTER ========================= -->
+<form action="/user/products" method="get" class="search-filter-bar">
 
-        <!-- SEARCH BUTTON -->
-        <button class="btn btn-primary ms-2" style="height: 45px; border-radius: 10px;">
-            <i class="fa fa-search"></i>
-        </button>
+    <input type="text"
+           name="search"
+           class="form-control search-input"
+           placeholder="Search products..."
+           value="{{ request.args.get('search','') }}">
 
-        <!-- FILTER DROPDOWN -->
-        <select name="filter" class="form-select ms-2"
-                style="width: 180px; height: 45px; border-radius: 10px;"
-                onchange="this.form.submit()">
+    <select name="category" class="form-select category-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c.category }}"
+            {% if request.args.get('category') == c.category %}selected{% endif %}>
+            {{ c.category }}
+        </option>
+        {% endfor %}
+    </select>
 
-            <option value="">Filter</option>
+    <button class="btn btn-primary search-btn">
+        <i class="fa fa-search"></i>
+    </button>
 
-            <option value="low" {% if request.args.get('filter')=='low' %}selected{% endif %}>
-                Price: Low → High
-            </option>
+</form>
 
-            <option value="high" {% if request.args.get('filter')=='high' %}selected{% endif %}>
-                Price: High → Low
-            </option>
-
-            <option value="new" {% if request.args.get('filter')=='new' %}selected{% endif %}>
-                Newest First
-            </option>
-
-        </select>
-
-    </form>
-
-</div>
-
+{% if not is_search %}
 
 <!-- ========================= MAIN BANNER SLIDER ========================= -->
-<div id="mainBanner" class="banner-slider">
-
+<div class="banner-slider">
     <div class="slides">
-        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30" class="banner-img">
-        <img src="https://images.unsplash.com/photo-1503602642458-232111445657" class="banner-img">
+        <div class="slide"><img src="https://rukminim2.flixcart.com/fk-p-flap/3240/540/image/8d6ea073e4f5d4c8.png?q=60"></div>
+        <div class="slide"><img src="https://rukminim2.flixcart.com/fk-p-flap/3240/540/image/66faf3950cda0b7a.png?q=60"></div>
+        <div class="slide"><img src="https://rukminim2.flixcart.com/fk-p-flap/3240/540/image/1338bd4fc60390d8.jpg?q=60"></div>
+        <div class="slide"><img src="https://rukminim2.flixcart.com/fk-p-flap/3240/540/image/74f0ad81e44e6e6f.jpg?q=60"></div>
     </div>
 
     <button class="banner-btn left" onclick="moveSlide(-1)">&#10094;</button>
     <button class="banner-btn right" onclick="moveSlide(1)">&#10095;</button>
-
 </div>
-
 
 <!-- ========================= CATEGORY CAROUSEL ========================= -->
 <h5 class="fw-bold mt-4 mb-2">Categories</h5>
 
 <div class="category-carousel">
 
+    <a href="/user/products" class="category-item active">
+        <img src="https://cdn-icons-png.flaticon.com/512/3081/3081559.png" class="cat-img">
+        <span>All</span>
+    </a>
+
     {% for c in categories %}
-    {% set cat = c.category.lower() %}
-
-    {% if cat == "automobiles" or cat == "bike" %}
-        {% set img = "https://images.unsplash.com/photo-1503376780353-7e6692767b70" %}
-
-    {% elif cat == "fruits" %}
-        {% set img = "https://images.unsplash.com/photo-1574226516831-e1dff420e12e" %}
-
-    {% elif cat == "electronics" %}
-        {% set img = "https://images.unsplash.com/photo-1518770660439-4636190af475" %}
-
-    {% elif cat == "shoe" %}
-        {% set img = "https://images.unsplash.com/photo-1519741497674-611481863552" %}
-
-    {% elif cat == "clothing" %}
-        {% set img = "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f" %}
-
-    {% elif cat == "mobiles" %}
-        {% set img = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9" %}
-
+    {% set cat = c.category | lower %}
+    {% if 'mobile' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/1063/1063195.png' %}
+    {% elif 'laptop' in cat or 'computer' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/2920/2920277.png' %}
+    {% elif 'electronics' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/3659/3659898.png' %}
+    {% elif 'fashion' in cat or 'clothing' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/892/892458.png' %}
+    {% elif 'grocery' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png' %}
+    {% elif 'home' in cat or 'furniture' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/1946/1946436.png' %}
+    {% elif 'beauty' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/2965/2965567.png' %}
+    {% elif 'sports' in cat %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/857/857455.png' %}
     {% else %}
-        {% set img = "https://images.unsplash.com/photo-1585386959984-a4155223f9a5" %}
+        {% set img = 'https://cdn-icons-png.flaticon.com/512/679/679720.png' %}
     {% endif %}
 
-    <a href="/user/products?category={{ c.category }}"
-       class="category-item {% if request.args.get('category') == c.category %}active{% endif %}">
+    <a href="/user/products?category={{ c.category }}" class="category-item">
         <img src="{{ img }}" class="cat-img">
         <span>{{ c.category }}</span>
     </a>
-
     {% endfor %}
-
 </div>
 
+<!-- ========================= DEAL SLIDER ========================= -->
+<h5 class="fw-bold mt-4 mb-2">🔥 Super Deals for You</h5>
 
+<div class="deal-slider">
+    <button class="deal-btn left" onclick="moveDeal(-1)">&#10094;</button>
 
+    <div class="deal-track" id="dealTrack">
+        <div class="deal-card"><img src="https://photos5.appleinsider.com/gallery/66166-138682-m4-macbook-air-300-off-l.jpg" class="deal-img"></div>
+        <div class="deal-card"><img src="https://cdn.grabon.in/gograbon/images/web-images/uploads/1617875488697/clothing-offers.jpg" class="deal-img"></div>
+        <div class="deal-card"><img src="https://blog.droom.in/droomassets/uploads/2023/08/How-to-Get-Best-Deals-and-Offers-on-Bikes.jpg" class="deal-img"></div>
+        <div class="deal-card"><img src="https://images.macrumors.com/t/if6dRwrotIEKcGulOk7sQulySPQ=/2500x/article-new/2017/12/Deals-Header-Image-Blue.jpg" class="deal-img"></div>
+        <div class="deal-card"><img src="https://cdn.grabon.in/gograbon/images/web-images/uploads/1618548899692/groceries-offers.jpg" class="deal-img"></div>
+        <div class="deal-card"><img src="https://assets.gopaisa.com/unsafe/0x0/https://gpcdn.ams3.cdn.digitaloceanspaces.com/ddhomebanner/flipkart-mobilebonanza-offer-banner-13112019.jpg" class="deal-img"></div>
+    </div>
 
+    <button class="deal-btn right" onclick="moveDeal(1)">&#10095;</button>
+</div>
+
+{% endif %}
 
 <!-- ========================= PRODUCTS GRID ========================= -->
-<h4 class="fw-bold mt-4 mb-3">All Products</h4>
+<h4 class="fw-bold mt-4 mb-3">
+    {% if is_search %}Search Results{% else %}All Products{% endif %}
+</h4>
 
 <div class="row user-products-wrapper">
-
-    {% for p in products %}
-    <div class="col-6 col-md-3 mb-4">
-        <div class="card product-card shadow-sm">
-
-            <img src="/static/uploads/product_images/{{ p.image }}" class="card-img-top product-img">
-
-            <div class="card-body text-center">
-
-                <h6 class="fw-semibold product-name">{{ p.name }}</h6>
-
-                <p class="text-success fw-bold mb-1">₹{{ p.price }}</p>
-
-                {% set rating = [3,4,5] | random %}
-                <p class="rating-stars text-warning mb-1">
-                    {% for i in range(rating) %}
-                        <i class="fa fa-star"></i>
-                    {% endfor %}
-                    {% for i in range(5-rating) %}
-                        <i class="fa fa-star text-secondary"></i>
-                    {% endfor %}
-                </p>
-
-                {% if p.stock > 0 %}
-                    <p class="text-success small">In Stock ({{ p.stock }})</p>
-                {% else %}
-                    <p class="text-danger small">Out of Stock</p>
-                {% endif %}
-
-                <a href="/user/product/{{ p.product_id }}"
-                   class="btn btn-outline-primary btn-sm w-100 mb-2">
-                    <i class="fa fa-eye"></i> View
-                </a>
-
-                {% if p.stock > 0 %}
-                <button class="btn btn-primary btn-sm w-100 add-to-cart"
-                        data-id="{{ p.product_id }}">
-                    <i class="fa fa-cart-plus"></i> Add to Cart
-                </button>
-                {% else %}
-                <button class="btn btn-secondary btn-sm w-100" disabled>
-                    Out of Stock
-                </button>
-                {% endif %}
-
-            </div>
+{% for p in products %}
+<div class="col-6 col-md-3 mb-4">
+    <div class="card product-card shadow-sm">
+        <img src="/static/uploads/product_images/{{ p.image }}" class="card-img-top product-img">
+        <div class="card-body text-center">
+            <h6 class="product-name">{{ p.name }}</h6>
+            <p class="fw-bold text-success">₹{{ p.price }}</p>
+            <a href="/user/product/{{ p.product_id }}" class="btn btn-outline-primary btn-sm w-100 mb-2">View</a>
+            {% if p.stock > 0 %}
+            <button class="btn btn-primary btn-sm w-100 add-to-cart" data-id="{{ p.product_id }}">Add to Cart</button>
+            {% else %}
+            <button class="btn btn-secondary btn-sm w-100" disabled>Out of Stock</button>
+            {% endif %}
         </div>
     </div>
-    {% endfor %}
-
+</div>
+{% else %}
+<p class="text-center text-muted">No products found.</p>
+{% endfor %}
 </div>
 
+</div> <!-- END PAGE CONTENT -->
 
-<!-- ========================= ADD TO CART AJAX ========================= -->
+<!-- ========================= SCRIPTS ========================= -->
 <script>
-document.querySelectorAll('.add-to-cart').forEach(btn => {
-    btn.addEventListener('click', function () {
-        let pid = this.getAttribute("data-id");
+document.documentElement.style.scrollBehavior = "smooth";
 
-        fetch(`/user/add-to-cart/${pid}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "error") {
-                    alert(data.message);
-                } else {
-                    document.getElementById("cart-count").innerText = data.cart_count;
-                    alert("Product added to cart!");
-                }
-            });
-    });
-});
-</script>
-
-
-<!-- ========================= BANNER SLIDER JS ========================= -->
-<script>
-let index = 0;
-
+let currentIndex = 0;
 function moveSlide(step) {
-    const slider = document.querySelector(".banner-slider .slides");
-    const totalSlides = slider.children.length;
-
-    index = (index + step + totalSlides) % totalSlides;
-
-    slider.style.transform = "translateX(" + (-index * 100) + "vw)";
+    const slides = document.querySelector(".slides");
+    const total = document.querySelectorAll(".slide").length;
+    currentIndex = (currentIndex + step + total) % total;
+    slides.style.transform = `translateX(-${currentIndex * 100}%)`;
 }
-
 setInterval(() => moveSlide(1), 4000);
+
+let dealIndex = 0;
+function moveDeal(direction) {
+    const track = document.getElementById("dealTrack");
+    const cards = track.querySelectorAll(".deal-card");
+    const cardWidth = cards[0].offsetWidth + 20;
+    const visible = document.querySelector(".deal-slider").offsetWidth;
+    const maxIndex = cards.length - Math.floor(visible / cardWidth);
+    dealIndex = Math.max(0, Math.min(dealIndex + direction, maxIndex));
+    track.style.transform = `translateX(-${dealIndex * cardWidth}px)`;
+}
 </script>
 
-
-<!-- ========================= PAGE CSS ========================= -->
 <style>
+html{scroll-behavior:smooth}
 
-.search-filter-container input {
-    height: 45px;
-    border-radius: 10px;
+.page-content{
+    padding-bottom:140px; /* FOOTER SAFE SPACE */
 }
 
-.search-filter-container .btn,
-.search-filter-container select {
-    height: 45px;
-    border-radius: 10px;
+/* existing styles kept intact */
+.search-filter-bar{display:flex;gap:10px;margin-bottom:12px}
+.search-input,.category-select,.search-btn{height:45px;border-radius:10px}
+.category-select{width:220px}
+
+.banner-slider{height:260px;overflow:hidden;border-radius:12px;position:relative}
+.slides{display:flex;height:100%;transition:.6s}
+.slide{min-width:100%}
+.slide img{width:100%;height:100%;object-fit:cover}
+
+.banner-btn{
+    position:absolute;top:50%;transform:translateY(-50%);
+    background:rgba(0,0,0,.5);color:#fff;border:none;
+    font-size:28px;padding:10px 14px;border-radius:50%;z-index:10
 }
+.banner-btn.left{left:15px}
+.banner-btn.right{right:15px}
 
+.category-carousel{display:flex;gap:20px;overflow-x:auto}
+.category-item{text-align:center;color:#000;text-decoration:none}
+.cat-img{width:60px;height:60px;border-radius:50%}
 
-/* Banner */
-.banner-slider {
-    width: 100%;
-    height: 260px;
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-    margin-bottom: 20px;
+.deal-slider{position:relative;overflow:hidden}
+.deal-track{display:flex;gap:20px;transition:.5s}
+.deal-card{min-width:260px}
+.deal-img{height:140px;border-radius:10px}
+
+.deal-btn{
+    position:absolute;top:50%;transform:translateY(-50%);
+    background:#000;color:#fff;border:none;padding:8px 12px;z-index:10
 }
+.deal-btn.left{left:5px}
+.deal-btn.right{right:5px}
 
-.banner-slider .slides {
-    display: flex;
-    transition: transform 0.7s ease-in-out;
-    width: fit-content;
+.product-img{height:180px;object-fit:cover}
+
+@media(max-width:768px){
+.search-filter-bar{flex-direction:column}
+.search-input,.category-select,.search-btn{width:100%}
+.banner-slider{height:180px}
+.page-content{padding-bottom:160px}
 }
-
-.banner-img {
-    width: 100vw;
-    height: 260px;
-    object-fit: cover;
-}
-
-.banner-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 6px 14px;
-    border: none;
-    font-size: 26px;
-    background: rgba(0,0,0,0.4);
-    color: white;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 10;
-}
-
-.left { left: 10px; }
-.right { right: 10px; }
-
-
-/* Category */
-.category-carousel {
-    display: flex;
-    overflow-x: auto;
-    gap: 20px;
-    padding: 10px 0;
-    white-space: nowrap;
-}
-.category-carousel::-webkit-scrollbar { display: none; }
-
-.category-item {
-    text-align: center;
-    padding: 5px;
-    min-width: 80px;
-    text-decoration: none;
-    color: black;
-}
-.category-item.active {
-    border-bottom: 3px solid #007bff;
-}
-
-.cat-img {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-
-/* Deals */
-.deals-wrapper {
-    display: flex;
-    overflow-x: auto;
-    gap: 15px;
-    padding-bottom: 8px;
-}
-
-.deal-card {
-    min-width: 250px;
-}
-
-.deal-img {
-    width: 100%;
-    height: 140px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-
 </style>
 
 {% endblock %}
